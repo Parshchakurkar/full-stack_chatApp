@@ -13,7 +13,7 @@ jobs:
   displayName: 'Terraform ACR Creation'
   steps:
     - checkout: self
-    # Install Terraform
+
     - task: TerraformInstaller@1
       inputs:
         terraformVersion: '1.6.6'
