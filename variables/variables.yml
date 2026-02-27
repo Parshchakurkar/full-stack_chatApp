@@ -1,9 +1,13 @@
-TF_VAR_env                   = "dev"
-TF_VAR_rg-name               = "chatapp-resources"
-TF_VAR_rg-location           = "eastus"
-TF_VAR_vnet_address_space    = ["10.0.0.0/16"]
-TF_VAR_subnet_address_prefix = ["10.0.1.0/24"]
-TF_VAR_service_cidr          = "10.0.0.0/16"
-TF_VAR_dns_service_ip        = "172.16.0.10"
-TF_VAR_vm_size               = "Standard_DS2_v2"
-TF_VAR_acrname               = "chatappacr"
+TF_VAR_env                   : "dev"
+TF_VAR_rg-name               : "chatapp-resources"
+TF_VAR_rg-location           : "eastus"
+TF_VAR_vnet_address_space    : ["10.0.0.0/16"]
+TF_VAR_subnet_address_prefix : ["10.0.1.0/24"]
+TF_VAR_service_cidr          : "10.0.0.0/16"
+TF_VAR_dns_service_ip        : "172.16.0.10"
+TF_VAR_vm_size               : "Standard_DS2_v2"
+TF_VAR_acrname               : "chatappacr"
+
+storage_account              : "chatappresources1"
+tfstatefile                 : "terrafrom-acr.tfstate"
+containername               : "terraform"
