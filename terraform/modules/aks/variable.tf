@@ -32,6 +32,4 @@ variable "node_count" {
 variable "vm_size" {
   description = "vm size for the node"
 }
-variable "acrname" {
-  description = "name of the container registry"
-}
+
