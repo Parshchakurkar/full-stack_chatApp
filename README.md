@@ -178,27 +178,36 @@ docker-compose logs -f
 You can now interact with the real-time chat app and start messaging!
 
 ---
+## Terraform
+- created AKS modlue currently now for dev environment
+### Terraform architecture for pipeline and infrastructure
+![alt text](image.png)
+- if manually running infrastructre, create terraform.tfvars file have all the varaible values, and run
+```bash
+terraform init
+```
+once initialization is done
 
+```bash
+terraform plan
+```
+and final run 
 
+```bash
+terraform apply --auto-approve Y
+```
 
-### 🤝 Contributing
+- if want to see the terraform resource graphs, run
+```bash
+terraform graph
+```
+put the output in file with extension .dot ex: graph.dot
 
-
-We welcome contributions from DevOps & Developer of all skill levels! Here's how you can contribute:
-
-**Report bugs:** If you encounter any bugs or issues, please open an issue with detailed information.
-**Suggest features:** Have an idea for a new feature? Open an issue to discuss it with the community.
-**Submit pull requests:** If you have a fix or a feature you'd like to contribute, submit a pull request. Ensure your changes pass any linting or tests, if applicable.
-
-### 🌐 Join the Community
-
-We invite you to join our community of developers and contributors. Let's work together to build an amazing real-time chat application!
-
-* **Star this repository** to show your support
-* **Fork this repository** to contribute to the project
-* **Open an issue** to report bugs or suggest features
-* **Submit a pull request** to contribute code changes
-
+- Download https://graphviz.org/download/.  to convert graph.dot to .png
+- One download complete run:
+```bash 
+dot -Tpng graph.dot -o graph.png
+```
 ## 🔮 Future Plans
 
 
