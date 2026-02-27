@@ -1,0 +1,9 @@
+env                   = "dev"
+rg-name               = "chatapp-resources"
+rg-location           = "eastus"
+vnet_address_space    = ["10.0.0.0/16"]
+subnet_address_prefix = ["10.0.1.0/24"]
+service_cidr          = "10.0.0.0/16"
+dns_service_ip        = "172.16.0.10"
+vm_size               = "Standard_DS2_v2"
+subscription_id       = "9671d8e0-a851-481b-9c6f-24a31439312b"

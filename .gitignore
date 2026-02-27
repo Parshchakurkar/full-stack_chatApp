@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
+#terraform
+.tfvars
+.tfstate
+.terraform
+.terraform.lock.hcl
