@@ -43,7 +43,7 @@ resource "azurerm_kubernetes_cluster" "chat-app-aks" {
 
 resource "azurerm_container_registry" "chat-app-acr" {
   resource_group_name = data.azurerm_resource_group.chat-app.name
-  name                = "${var.rg-name}-acr"
+  name                = var.acrname
   location            = data.azurerm_resource_group.chat-app.location
   sku                 = "Basic"
   #Only Azure RBAC authentication is allowed (recommended)

@@ -38,3 +38,6 @@ variable "subscription_id" {
   description = "subscription ID"
   type        = string
 }
+variable "acrname" {
+  description = "name of the container registry"
+}

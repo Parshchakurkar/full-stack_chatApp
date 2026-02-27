@@ -10,4 +10,5 @@ module "dataapp-aks" {
   dns_service_ip        = var.dns_service_ip
   node_count            = var.node_count
   vm_size               = var.vm_size
+  acrname               = var.acrname
 }
