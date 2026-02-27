@@ -5,6 +5,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
+  - template: "variables/variables.yml"
   - name: workingDirectory
     value: "terraform/acr creation"
 jobs:
@@ -26,13 +27,13 @@ jobs:
         workingDirectory: '$(workingDirectory)'
         backendServiceArm: 'chatapp'
         backendAzureRmResourceGroupName: '$(TF_VAR_rg-name)'
-        backendAzureRmStorageAccountName: '$(chatappresources1'
-        backendAzureRmContainerName: '$(terraform)'
-        backendAzureRmKey: 'terrafrom-acr.tfstate'
+        backendAzureRmStorageAccountName: '$(storage_account)'
+        backendAzureRmContainerName: '$(containername)'
+        backendAzureRmKey: '$(tfstatefile)'
       env:
         TF_VAR_env: $(TF_VAR_env)
-        TF_VAR_rg-name : $(TF_VAR_rg-name)
-        TF_VAR_rg-location : $(TF_VAR_rg-location)
+        TF_VAR_rg_name : $(TF_VAR_rg_name)
+        TF_VAR_rg_location : $(TF_VAR_rg_location)
         TF_VAR_vnet_address_space: $(TF_VAR_vnet_address_space)
         TF_VAR_subnet_address_prefix: $(TF_VAR_subnet_address_prefix)
         TF_VAR_service_cidr : $(TF_VAR_service_cidr)
@@ -57,6 +58,17 @@ jobs:
         command: 'plan'
         workingDirectory: '$(workingDirectory)'
         environmentServiceNameAzureRM: 'chatapp'
+      env:
+        TF_VAR_env: $(TF_VAR_env)
+        TF_VAR_rg_name : $(TF_VAR_rg_name)
+        TF_VAR_rg_location : $(TF_VAR_rg_location)
+        TF_VAR_vnet_address_space: $(TF_VAR_vnet_address_space)
+        TF_VAR_subnet_address_prefix: $(TF_VAR_subnet_address_prefix)
+        TF_VAR_service_cidr : $(TF_VAR_service_cidr)
+        TF_VAR_dns_service_ip : $(TF_VAR_dns_service_ip)
+        TF_VAR_vm_size : $(TF_VAR_vm_size)
+        TF_VAR_subscription_id : $(TF_VAR_subscription_id)
+        TF_VAR_acrname : $(TF_VAR_acrname)
 
     # Terraform APPLY
     - task: TerraformTaskV4@4
@@ -66,3 +78,14 @@ jobs:
         command: 'apply'
         workingDirectory: '$(workingDirectory)'
         environmentServiceNameAzureRM: 'chatapp'
+      env:
+        TF_VAR_env: $(TF_VAR_env)
+        TF_VAR_rg_name : $(TF_VAR_rg_name)
+        TF_VAR_rg_location : $(TF_VAR_rg_location)
+        TF_VAR_vnet_address_space: $(TF_VAR_vnet_address_space)
+        TF_VAR_subnet_address_prefix: $(TF_VAR_subnet_address_prefix)
+        TF_VAR_service_cidr : $(TF_VAR_service_cidr)
+        TF_VAR_dns_service_ip : $(TF_VAR_dns_service_ip)
+        TF_VAR_vm_size : $(TF_VAR_vm_size)
+        TF_VAR_subscription_id : $(TF_VAR_subscription_id)
+        TF_VAR_acrname : $(TF_VAR_acrname)
