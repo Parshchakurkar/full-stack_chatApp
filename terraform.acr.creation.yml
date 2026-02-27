@@ -4,9 +4,51 @@ trigger:
 pool:
   vmImage: 'windows-latest'
 
+variables:
+  - name: workingDirectory
+    value: "terraform/acr creation"
 jobs:
 - job: Terraform_ACR_Creation
   displayName: 'Terraform ACR Creation'
   steps:
     - checkout: self
-    - task:
+    # Install Terraform
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: '1.6.6'
+
+    # Terraform INIT
+    - task: TerraformTaskV4@4
+      displayName: Terraform Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(workingDirectory)'
+        backendServiceArm: 'azure-service-connection'
+
+    # Terraform VALIDATE
+    - task: TerraformTaskV4@4
+      displayName: Terraform Validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+        workingDirectory: '$(workingDirectory)'
+
+    # Terraform PLAN
+    - task: TerraformTaskV4@4
+      displayName: Terraform Plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(workingDirectory)'
+        environmentServiceNameAzureRM: 'azure-service-connection'
+
+    # Terraform APPLY
+    - task: TerraformTaskV4@4
+      displayName: Terraform Apply
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(workingDirectory)'
+        environmentServiceNameAzureRM: 'azure-service-connection'
+        args: '-auto-approve'
