@@ -6,7 +6,7 @@ pool:
 
 variables:
   - group: terraform variables
-  - template: "variables/variables.yml"
+  - template: "/variables/variables.yml"
   - name: workingDirectory
     value: "terraform/env/dev"
 jobs:
