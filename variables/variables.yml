@@ -1,0 +1,40 @@
+variables:
+
+- name: TF_VAR_env
+  value: dev
+
+- name: TF_VAR_rg_name
+  value: chatapp-resources
+
+- name: TF_VAR_rg_location
+  value: eastus
+
+- name: TF_VAR_vnet_address_space
+  value: '["10.0.0.0/16"]'
+
+- name: TF_VAR_subnet_address_prefix
+  value: '["10.0.1.0/24"]'
+
+- name: TF_VAR_service_cidr
+  value: 172.16.0.0/16
+
+- name: TF_VAR_dns_service_ip
+  value: 172.16.0.10
+
+- name: TF_VAR_vm_size
+  value: Standard_DS2_v2
+
+- name: TF_VAR_acrname
+  value: chatappacr
+
+- name: storage_account
+  value: chatappresources1
+
+- name: tfstatefileacr
+  value: terraform-acr.tfstate
+
+- name: tfstatefileaks
+  value: terraform-aks.tfstate
+
+- name: containername
+  value: terraform

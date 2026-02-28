@@ -208,6 +208,9 @@ put the output in file with extension .dot ex: graph.dot
 ```bash 
 dot -Tpng graph.dot -o graph.png
 ```
+
+### Varisbles:
+- varibles required for the terraform pipelie stored in the ```/variable/variable.yml``` file
 ## 🔮 Future Plans
 
 
