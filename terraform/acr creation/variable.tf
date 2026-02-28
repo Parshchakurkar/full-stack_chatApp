@@ -6,6 +6,6 @@ variable "subscription_id" {
   description = "subscription ID"
   type        = string
 }
-variable "rg-name" {
+variable "rg_name" {
   description = "resource group name for chat app resources"
 }

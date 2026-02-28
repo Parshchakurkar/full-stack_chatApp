@@ -1,5 +1,5 @@
 data "azurerm_resource_group" "chat-app" {
-  name     = var.rg-name
+  name     = var.rg_name
 
 }
 

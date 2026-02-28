@@ -2,11 +2,11 @@ variable "env" {
   description = "provide environment name"
   default     = "dev"
 }
-variable "rg-name" {
+variable "rg_name" {
   description = "resource group name for chat app resources"
 }
 
-variable "rg-location" {
+variable "rg_location" {
   description = "Resources location"
 }
 
@@ -37,4 +37,7 @@ variable "vm_size" {
 variable "subscription_id" {
   description = "subscription ID"
   type        = string
+}
+variable "acrname" {
+  description = "name of the container registry"
 }

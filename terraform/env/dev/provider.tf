@@ -6,10 +6,10 @@ terraform {
     }
   }
   backend "azurerm" {
-    key                  = "dataapp-dev.tfstate"
-    resource_group_name  = "chatapp-resources"
-    storage_account_name = "chatappresources1"
-    container_name       = "terraform"
+    key                  = " "
+    resource_group_name  = " "
+    storage_account_name = " "
+    container_name       = " "
   }
 }
 
