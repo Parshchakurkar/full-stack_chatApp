@@ -30,8 +30,11 @@ variables:
 - name: storage_account
   value: chatappresources1
 
-- name: tfstatefile
+- name: tfstatefileacr
   value: terraform-acr.tfstate
+
+- name: tfstatefileaks
+  value: terraform-aks.tfstate
 
 - name: containername
   value: terraform
