@@ -31,7 +31,7 @@ jobs:
         backendAzureRmResourceGroupName: '$(TF_VAR_rg_name)'
         backendAzureRmStorageAccountName: '$(storage_account)'
         backendAzureRmContainerName: '$(containername)'
-        backendAzureRmKey: '$(tfstatefile)'
+        backendAzureRmKey: '$(tfstatefileaks)'
       env:
         TF_VAR_env: $(TF_VAR_env)
         TF_VAR_rg_name : $(TF_VAR_rg_name)
