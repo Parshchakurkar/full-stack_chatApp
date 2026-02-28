@@ -5,7 +5,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  - template: "variables/variables.yml"
+  - template: "/variables/variables.yml"
   - name: workingDirectory
     value: "terraform/acr creation"
 jobs:
