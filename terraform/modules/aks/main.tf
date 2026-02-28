@@ -48,7 +48,7 @@ resource "azurerm_kubernetes_cluster" "chat-app-aks" {
 
 resource "azurerm_role_assignment" "chat-app-aks-acr" {
   principal_id         = azurerm_kubernetes_cluster.chat-app-aks.identity[0].principal_id
-  scope                = azurerm_container_registry.chat-app-acr.id
+  scope                = data.azurerm_container_registry.chatappacr.id
   role_definition_name = "AcrPull"
 
 }
