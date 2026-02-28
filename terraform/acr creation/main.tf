@@ -1,6 +1,8 @@
+data "" "name" {
+  
+}
 module "acrcreation" {
   source = "../modules/acr"
-    rg-name = var.rg-name
+    rg_name = var.rg_name
     acrname = var.acrname
-
 }

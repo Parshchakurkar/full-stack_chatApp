@@ -1,4 +1,4 @@
-variable "rg-name" {
+variable "rg_name" {
   description = "resource group name for chat app resources"
 }
 variable "acrname" {
