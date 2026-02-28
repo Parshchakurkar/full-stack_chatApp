@@ -1,6 +1,5 @@
 module "dataapp-aks" {
   source                = "../../modules/aks/"
-  node_count            = 2
   env                   = var.env
   rg_name               = var.rg_name
   rg_location           = var.rg_location
