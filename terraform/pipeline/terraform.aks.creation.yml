@@ -1,0 +1,92 @@
+name: $(Build.SourceBranchName)-$(Date:yyyyMMdd)-$(Rev:.r)
+trigger:
+- main
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  - template: "variables/variables.yml"
+  - name: workingDirectory
+    value: "terraform/env/dev"
+jobs:
+- job: Terraform_ACR_Creation
+  displayName: 'Terraform ACR Creation'
+  steps:
+    - checkout: self
+    
+    # Terrafrom Intaller
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: '1.6.6'
+
+    # Terraform INIT
+    - task: TerraformTaskV4@4
+      displayName: Terraform Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(workingDirectory)'
+        backendServiceArm: 'chatapp'
+        backendAzureRmResourceGroupName: '$(TF_VAR_rg_name)'
+        backendAzureRmStorageAccountName: '$(storage_account)'
+        backendAzureRmContainerName: '$(containername)'
+        backendAzureRmKey: '$(tfstatefile)'
+      env:
+        TF_VAR_env: $(TF_VAR_env)
+        TF_VAR_rg_name : $(TF_VAR_rg_name)
+        TF_VAR_rg_location : $(TF_VAR_rg_location)
+        TF_VAR_vnet_address_space: $(TF_VAR_vnet_address_space)
+        TF_VAR_subnet_address_prefix: $(TF_VAR_subnet_address_prefix)
+        TF_VAR_service_cidr : $(TF_VAR_service_cidr)
+        TF_VAR_dns_service_ip : $(TF_VAR_dns_service_ip)
+        TF_VAR_vm_size : $(TF_VAR_vm_size)
+        TF_VAR_subscription_id : $(TF_VAR_subscription_id)
+        TF_VAR_acrname : $(TF_VAR_acrname)
+
+    # Terraform VALIDATE
+    - task: TerraformTaskV4@4
+      displayName: Terraform Validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+        workingDirectory: '$(workingDirectory)'
+
+    # Terraform PLAN
+    - task: TerraformTaskV4@4
+      displayName: Terraform Plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(workingDirectory)'
+        environmentServiceNameAzureRM: 'chatapp'
+      env:
+        TF_VAR_env: $(TF_VAR_env)
+        TF_VAR_rg_name : $(TF_VAR_rg_name)
+        TF_VAR_rg_location : $(TF_VAR_rg_location)
+        TF_VAR_vnet_address_space: $(TF_VAR_vnet_address_space)
+        TF_VAR_subnet_address_prefix: $(TF_VAR_subnet_address_prefix)
+        TF_VAR_service_cidr : $(TF_VAR_service_cidr)
+        TF_VAR_dns_service_ip : $(TF_VAR_dns_service_ip)
+        TF_VAR_vm_size : $(TF_VAR_vm_size)
+        TF_VAR_subscription_id : $(TF_VAR_subscription_id)
+        TF_VAR_acrname : $(TF_VAR_acrname)
+
+    # Terraform APPLY
+    - task: TerraformTaskV4@4
+      displayName: Terraform Apply
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(workingDirectory)'
+        environmentServiceNameAzureRM: 'chatapp'
+      env:
+        TF_VAR_env: $(TF_VAR_env)
+        TF_VAR_rg_name : $(TF_VAR_rg_name)
+        TF_VAR_rg_location : $(TF_VAR_rg_location)
+        TF_VAR_vnet_address_space: $(TF_VAR_vnet_address_space)
+        TF_VAR_subnet_address_prefix: $(TF_VAR_subnet_address_prefix)
+        TF_VAR_service_cidr : $(TF_VAR_service_cidr)
+        TF_VAR_dns_service_ip : $(TF_VAR_dns_service_ip)
+        TF_VAR_vm_size : $(TF_VAR_vm_size)
+        TF_VAR_subscription_id : $(TF_VAR_subscription_id)
+        TF_VAR_acrname : $(TF_VAR_acrname)
