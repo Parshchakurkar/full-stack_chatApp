@@ -5,6 +5,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
+  - group: terraform variables
   - template: "variables/variables.yml"
   - name: workingDirectory
     value: "terraform/env/dev"
