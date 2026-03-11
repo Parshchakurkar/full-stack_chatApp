@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata: 
+  name: pv-azure-disk
+  labels:
+    app: DB
+  nameSpace: mongodb-namespace
+spec:
+  storageClassName: managed-standard-retain-sc
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  
