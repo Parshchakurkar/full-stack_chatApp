@@ -4,7 +4,6 @@ metadata:
   name: pv-azure-disk
   labels:
     app: DB
-  nameSpace: mongodb-namespace
 spec:
   storageClassName: managed-standard-retain-sc
   capacity:
