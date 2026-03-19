@@ -102,33 +102,6 @@ http://localhost
 ```
 ---
 
-## 🛠️ Getting Started
-
-Follow these simple steps to get the project up and running on your local Host using docker.
-
-```bash
-git clone https://github.com/iemafzalhassan/full-stack_chatApp.git
-```
-
-```bash
-cd full-stack_chatApp
-```
-## Create a Docker network:
-
-```bash
-docker network create full-stack
-```
-
-## 🛠️ Building the Frontend
-
-```bash
-cd frontend
-```
-
-```bash
-docker build -t full-stack_frontend .
-```
-
 ### Run the Frontend container:
 
 ```bash
@@ -183,6 +156,14 @@ You can now interact with the real-time chat app and start messaging!
 ### Terraform architecture for pipeline and infrastructure
 ![alt text](image.png)
 - if manually running infrastructre, create terraform.tfvars file have all the varaible values, and run
+prerequisite:
+i. chatapp-resources --> create resource group in eastUS
+ii. create service connection (chatapp) for the resource group
+iii. Assign access to the service account
+    1. Storage blob data contributor
+    2. Storage queue data contributor
+    3. resource group level ---> User access Administrator role
+
 ```bash
 terraform init
 ```
@@ -211,15 +192,19 @@ dot -Tpng graph.dot -o graph.png
 
 ### Varisbles:
 - varibles required for the terraform pipelie stored in the ```/variable/variable.yml``` file
-## 🔮 Future Plans
 
+or simply run the ACR pipeline to create acr resource.
+
+## Kubernetes:
+i. Run AKS pipeline to have the aks cluster created.
+ii. Run --> az aks get-credentials --resource chatapp-resources --name chatapp-resources-aks 
+iii. make sure you have images architecture match with node pool vm architechture.
+
+## 🔮 Future Plans
 
 This project is evolving, and here are a few exciting things on the horizon:
 
 * [ ] **CI/CD Pipelines:** Implement Continuous Integration and Continuous Deployment pipelines to automate testing and deployment.
-* [ ] **Kubernetes (K8s):** Add Kubernetes manifests for container orchestration to deploy the app on cloud platforms like AWS, GCP, or Azure.
-* [ ] **Feature Expansion:** Add more features like group chats, media sharing, and user status updates.
-* **Stay tuned for updates as we continue to improve and expand this project!**
 
 ---
 
@@ -232,7 +217,6 @@ This project is evolving, and here are a few exciting things on the horizon:
 ![logout](/frontend/public/logout.png)
 
 ![Login](/frontend/public/login.png)
-
 
 
 ## 📜 License
