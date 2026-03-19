@@ -6,21 +6,21 @@ data "azurerm_container_registry" "chatappacr" {
   name                = var.acrname
   resource_group_name = var.rg_name
 }
-# resource "azurerm_virtual_network" "chat-app-vnet" {
-#   name                = "${var.rg_name}-vnet"
-#   resource_group_name = data.azurerm_resource_group.chat-app.name
-#   location            = data.azurerm_resource_group.chat-app.location
-#   address_space       = var.vnet_address_space
-#   tags                = { "Environment" = var.env }
-# }
+resource "azurerm_virtual_network" "chat-app-vnet" {
+  name                = "${var.rg_name}-vnet"
+  resource_group_name = data.azurerm_resource_group.chat-app.name
+  location            = data.azurerm_resource_group.chat-app.location
+  address_space       = var.vnet_address_space
+  tags                = { "Environment" = var.env }
+}
 
-# resource "azurerm_subnet" "chat-app-subnet" {
-#   name                 = "${var.rg_name}-subnet"
-#   resource_group_name  = data.azurerm_resource_group.chat-app.name
-#   virtual_network_name = azurerm_virtual_network.chat-app-vnet.name
-#   address_prefixes     = var.subnet_address_prefix
+resource "azurerm_subnet" "chat-app-subnet" {
+  name                 = "${var.rg_name}-subnet"
+  resource_group_name  = data.azurerm_resource_group.chat-app.name
+  virtual_network_name = azurerm_virtual_network.chat-app-vnet.name
+  address_prefixes     = var.subnet_address_prefix
 
-# }
+}
 resource "azurerm_kubernetes_cluster" "chat-app-aks" {
   name                = "${var.rg_name}-aks"
   resource_group_name = data.azurerm_resource_group.chat-app.name
@@ -31,6 +31,7 @@ resource "azurerm_kubernetes_cluster" "chat-app-aks" {
     name       = "default"
     node_count = var.node_count
     vm_size    = var.vm_size
+    vnet_subnet_id = azurerm_subnet.chat-app-subnet.id
   }
   # need managed identity for AKS to access other resources
   identity { type = "SystemAssigned" }
