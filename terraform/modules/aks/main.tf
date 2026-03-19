@@ -26,10 +26,12 @@ resource "azurerm_kubernetes_cluster" "chat-app-aks" {
   resource_group_name = data.azurerm_resource_group.chat-app.name
   location            = data.azurerm_resource_group.chat-app.location
   dns_prefix          = "${var.rg_name}-dns"
+  role_based_access_control_enabled = true
   default_node_pool {
     name       = "default"
     node_count = var.node_count
     vm_size    = var.vm_size
+    vnet_subnet_id = azurerm_subnet.chat-app-subnet.id
   }
   # need managed identity for AKS to access other resources
   identity { type = "SystemAssigned" }
@@ -46,9 +48,10 @@ resource "azurerm_kubernetes_cluster" "chat-app-aks" {
 
 
 resource "azurerm_role_assignment" "chat-app-aks-acr" {
-  principal_id         = azurerm_kubernetes_cluster.chat-app-aks.identity[0].principal_id
+  principal_id         = azurerm_kubernetes_cluster.chat-app-aks.kubelet_identity[0].object_id
   scope                = data.azurerm_container_registry.chatappacr.id
   role_definition_name = "AcrPull"
-  depends_on = [ azurerm_kubernetes_cluster.chat-app-aks ]
-
+  depends_on = [
+    azurerm_kubernetes_cluster.chat-app-aks
+  ]
 }
