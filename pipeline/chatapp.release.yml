@@ -1,0 +1,9 @@
+name: ChatApp_Frontend_Release_$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+      - release/*
+
+variables:

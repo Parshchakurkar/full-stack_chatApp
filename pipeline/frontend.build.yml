@@ -1,0 +1,277 @@
+name: Frontend_Build_$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+      - release/*
+      - develop
+    exclude:
+      - docs/*
+  paths:
+    include:
+      - frontend/**
+      - pipeline/frontend.build.yml
+
+pr:
+  - develop
+  - release/*
+
+variables:
+  - template: /pipeline/variables/variables.yml
+  - name: containerRegistry
+    value: chatappacr.azurecr.io
+  - name: acrName
+    value: chatappacr
+  - name: imageName
+    value: chatapp-frontend
+  - name: imageTag
+    value: $(Build.BuildId)
+  - name: dockerfilePath
+    value: frontend/Dockerfile
+  - name: buildContext
+    value: frontend
+  - name: nodeVersion
+    value: '18'
+  - name: npmCacheSize
+    value: 500
+  - name: snykScanType
+    value: application,container
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Validate
+    displayName: Validate & Quality Checks
+    jobs:
+      - job: CodeQuality
+        displayName: Code Quality Validation
+        steps:
+          - checkout: self
+            fetchDepth: 0
+
+          - task: NodeTool@0
+            displayName: Use Node.js $(nodeVersion)
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - task: Cache@2
+            displayName: Cache npm packages
+            inputs:
+              key: npm | $(Agent.OS) | frontend/package-lock.json
+              path: $(npm_config_cache)
+              cacheHitVar: CACHE_RESTORED
+
+          - script: |
+              cd frontend
+              npm ci
+            displayName: Install dependencies
+            condition: ne(variables.CACHE_RESTORED, 'true')
+
+          - script: |
+              cd frontend
+              npm run lint
+            displayName: Run ESLint
+            continueOnError: true
+
+          - script: |
+              cd frontend
+              npm run build
+            displayName: Build frontend application
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish build artifacts
+            inputs:
+              pathToPublish: frontend/dist
+              artifactName: frontend-dist-$(Build.BuildId)
+
+  - stage: SecurityScan
+    displayName: Security Scanning
+    dependsOn: Validate
+    condition: succeeded()
+    jobs:
+      - job: SnykContainerScan
+        displayName: Snyk Container & IaC Scan
+        steps:
+          - checkout: self
+
+          - task: NodeTool@0
+            displayName: Use Node.js $(nodeVersion)
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - script: |
+              npm install -g snyk
+            displayName: Install Snyk CLI
+
+          - script: |
+              snyk auth $(SNYK_TOKEN)
+            displayName: Authenticate with Snyk
+            env:
+              SNYK_TOKEN: $(SNYK_TOKEN)
+
+          - script: |
+              cd frontend
+              snyk test --severity-threshold=high
+            displayName: Snyk Application Dependencies Scan
+            continueOnError: true
+
+          - script: |
+              snyk iac test frontend/Dockerfile --severity=high
+            displayName: Snyk Infrastructure as Code Scan (Dockerfile)
+            continueOnError: true
+
+  - stage: BuildDocker
+    displayName: Build Docker Image
+    dependsOn: SecurityScan
+    condition: succeeded()
+    jobs:
+      - job: BuildImage
+        displayName: Build and Push Image
+        steps:
+          - checkout: self
+
+          - task: Docker@2
+            displayName: Build Docker image
+            inputs:
+              command: build
+              dockerfile: $(dockerfilePath)
+              repository: $(imageName)
+              tags: |
+                $(imageTag)
+                latest
+              Dockerfile: $(dockerfilePath)
+              context: $(buildContext)
+              arguments: |
+                --build-arg NODE_VERSION=$(nodeVersion)
+
+          - script: |
+              docker image inspect $(containerRegistry)/$(imageName):$(imageTag)
+            displayName: Verify Docker image
+
+          - script: |
+              docker history $(imageName):$(imageTag) --human --no-trunc
+            displayName: Display Docker layer history
+            continueOnError: true
+
+  - stage: ImageSecurityScan
+    displayName: Image Security Scanning
+    dependsOn: BuildDocker
+    condition: succeeded()
+    jobs:
+      - job: SnykImageScan
+        displayName: Snyk Docker Image Scan
+        steps:
+          - checkout: self
+
+          - task: Docker@2
+            displayName: Build Docker image for scanning
+            inputs:
+              command: build
+              dockerfile: $(dockerfilePath)
+              repository: $(imageName)
+              tags: |
+                $(imageTag)
+                latest
+              Dockerfile: $(dockerfilePath)
+              context: $(buildContext)
+
+          - script: |
+              npm install -g snyk
+            displayName: Install Snyk CLI
+
+          - script: |
+              snyk auth $(SNYK_TOKEN)
+            displayName: Authenticate with Snyk
+            env:
+              SNYK_TOKEN: $(SNYK_TOKEN)
+
+          - script: |
+              snyk container test $(imageName):$(imageTag) --severity=high --file=$(dockerfilePath)
+            displayName: Snyk Docker Image Vulnerability Scan
+            continueOnError: true
+
+          - task: PublishTestResults@2
+            displayName: Publish Snyk scan results
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: snyk-report.xml
+            condition: always()
+            continueOnError: true
+
+  - stage: PushToACR
+    displayName: Push to Azure Container Registry
+    dependsOn: ImageSecurityScan
+    condition: |
+      and(
+        succeeded(),
+        or(
+          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+          eq(variables['Build.SourceBranch'], 'refs/heads/master'),
+          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+        )
+      )
+    jobs:
+      - job: PushImage
+        displayName: Push Image to ACR
+        steps:
+          - checkout: self
+
+          - task: Docker@2
+            displayName: Build Docker image
+            inputs:
+              command: build
+              dockerfile: $(dockerfilePath)
+              repository: $(imageName)
+              tags: |
+                $(imageTag)
+                latest
+              Dockerfile: $(dockerfilePath)
+              context: $(buildContext)
+
+          - task: Docker@2
+            displayName: Login to Azure Container Registry
+            inputs:
+              command: login
+              containerRegistry: $(acrConnection)
+
+          - script: |
+              docker tag $(imageName):$(imageTag) $(containerRegistry)/$(imageName):$(imageTag)
+              docker tag $(imageName):latest $(containerRegistry)/$(imageName):latest
+              docker tag $(imageName):latest $(containerRegistry)/$(imageName):$(Build.SourceBranchName)-latest
+            displayName: Tag image for ACR
+
+          - task: Docker@2
+            displayName: Push image to ACR
+            inputs:
+              command: push
+              repository: $(containerRegistry)/$(imageName)
+              tags: |
+                $(imageTag)
+                latest
+                $(Build.SourceBranchName)-latest
+              containerRegistry: $(acrConnection)
+
+          - script: |
+              echo "Image pushed successfully"
+              echo "Registry: $(containerRegistry)"
+              echo "Repository: $(imageName)"
+              echo "Tags: $(imageTag), latest, $(Build.SourceBranchName)-latest"
+            displayName: Log push details
+
+  - stage: NotifyBuild
+    displayName: Build Notifications
+    dependsOn: PushToACR
+    condition: always()
+    jobs:
+      - job: NotifyStatus
+        displayName: Notify Build Status
+        steps:
+          - script: |
+              if [ $(Agent.JobStatus) = "Succeeded" ]; then
+                echo "Build pipeline completed successfully"
+              else
+                echo "Build pipeline failed"
+              fi
+            displayName: Build Status
