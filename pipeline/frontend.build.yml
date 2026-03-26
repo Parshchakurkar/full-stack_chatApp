@@ -14,6 +14,7 @@ trigger:
       - pipeline/frontend.build.yml
 
 pr:
+  - main
   - develop
   - release/*
 
@@ -25,43 +26,36 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-  - stage: Validate
-    displayName: Validate & Quality Checks
+  - stage: Build
+    displayName: Build
     jobs:
-      - job: CodeQuality
-        displayName: Code Quality Validation
+      - job: CodevalidationandBuild
+        displayName: Code Quality Validation and Build
         steps:
           - checkout: self
-            fetchDepth: 0
-
+          
           - task: NodeTool@0
             displayName: Use Node.js $(nodeVersion)
             inputs:
               versionSpec: $(nodeVersion)
-
-          - task: Cache@2
-            displayName: Cache npm packages
-            inputs:
-              key: npm | $(Agent.OS) | frontend/package-lock.json
-              path: $(npm_config_cache)
-              cacheHitVar: CACHE_RESTORED
-
-          - script: |
-              cd frontend
-              npm ci
+          
+          - task: Npm@1
             displayName: Install dependencies
-            condition: ne(variables.CACHE_RESTORED, 'true')
+            inputs:
+              command: 'ci'
+              workingDir: 'frontend'
 
           - script: |
               cd frontend
               npm run lint
             displayName: Run ESLint
             continueOnError: true
-
-          - script: |
-              cd frontend
-              npm run build
-            displayName: Build frontend application
+          
+          - task: Npm@1
+            inputs:
+              command: 'custom'
+              workingDir: 'frontend'
+              customCommand: 'run build'
 
           - task: PublishBuildArtifacts@1
             displayName: Publish build artifacts
@@ -71,7 +65,7 @@ stages:
 
   - stage: SecurityScan
     displayName: Security Scanning
-    dependsOn: Validate
+    dependsOn: Build
     condition: succeeded()
     jobs:
       - job: SnykContainerScan
@@ -118,20 +112,15 @@ stages:
           - task: Docker@2
             displayName: Build Docker image
             inputs:
-              command: build
-              dockerfile: $(dockerfilePath)
-              repository: $(imageName)
+              containerRegistry: 'docker'
+              repository: '$(imageName)'
+              command: 'build'
+              Dockerfile: '$(dockerfilePath)'
               tags: |
                 $(imageTag)
                 latest
-              Dockerfile: $(dockerfilePath)
-              context: $(buildContext)
-              arguments: |
-                --build-arg NODE_VERSION=$(nodeVersion)
+              arguments: '--build-arg NODE_VERSION=$(nodeVersion)'
 
-          - script: |
-              docker image inspect $(containerRegistry)/$(imageName):$(imageTag)
-            displayName: Verify Docker image
 
           - script: |
               docker history $(imageName):$(imageTag) --human --no-trunc
@@ -149,16 +138,14 @@ stages:
           - checkout: self
 
           - task: Docker@2
-            displayName: Build Docker image for scanning
             inputs:
-              command: build
-              dockerfile: $(dockerfilePath)
-              repository: $(imageName)
+              containerRegistry: 'docker'
+              repository: '$(imageName)'
+              command: 'build'
+              Dockerfile: '$(dockerfilePath)'
               tags: |
                 $(imageTag)
                 latest
-              Dockerfile: $(dockerfilePath)
-              context: $(buildContext)
 
           - script: |
               npm install -g snyk
@@ -204,14 +191,13 @@ stages:
           - task: Docker@2
             displayName: Build Docker image
             inputs:
-              command: build
-              dockerfile: $(dockerfilePath)
-              repository: $(imageName)
+              containerRegistry: 'docker'
+              repository: '$(imageName)'
+              command: 'build'
+              Dockerfile: '$(dockerfilePath)'
               tags: |
                 $(imageTag)
                 latest
-              Dockerfile: $(dockerfilePath)
-              context: $(buildContext)
 
           - task: Docker@2
             displayName: Login to Azure Container Registry
