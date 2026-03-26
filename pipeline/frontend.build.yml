@@ -52,6 +52,7 @@ stages:
             continueOnError: true
           
           - task: Npm@1
+            displayName: NPM Build
             inputs:
               command: 'custom'
               workingDir: 'frontend'
@@ -63,41 +64,32 @@ stages:
               pathToPublish: frontend/dist
               artifactName: frontend-dist-$(Build.BuildId)
 
-  # - stage: SecurityScan
-  #   displayName: Security Scanning
-  #   dependsOn: Build
-  #   condition: succeeded()
-  #   jobs:
-  #     - job: SnykContainerScan
-  #       displayName: Snyk Container & IaC Scan
-  #       steps:
-  #         - checkout: self
+  - stage: SecurityScan
+    displayName: Security Scanning
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: SnykSourceScan
+        displayName: Snyk Source Scan
+        steps:
+          - checkout: self
 
-  #         - task: NodeTool@0
-  #           displayName: Use Node.js $(nodeVersion)
-  #           inputs:
-  #             versionSpec: $(nodeVersion)
+          - task: NodeTool@0
+            displayName: Use Node.js $(nodeVersion)
+            inputs:
+              versionSpec: $(nodeVersion)
 
-  #         - script: |
-  #             npm install -g snyk
-  #           displayName: Install Snyk CLI
+          - task: SnykSecurityScan@1
+            inputs:
+              serviceConnectionEndpoint: 'snyk-connection'
+              testType: 'code'
+              codeSeverityThreshold: 'medium'
+              failOnIssues: false
+              projectName: 'Chatapp-Frontend'
+              organization: 'parshchakurkar'
+              failOnThreshold: 'medium'
 
-  #         - script: |
-  #             snyk auth $(SNYK_TOKEN)
-  #           displayName: Authenticate with Snyk
-  #           env:
-  #             SNYK_TOKEN: $(SNYK_TOKEN)
 
-  #         - script: |
-  #             cd frontend
-  #             snyk test --severity-threshold=high
-  #           displayName: Snyk Application Dependencies Scan
-  #           continueOnError: true
-
-  #         - script: |
-  #             snyk iac test frontend/Dockerfile --severity=high
-  #           displayName: Snyk Infrastructure as Code Scan (Dockerfile)
-  #           continueOnError: true
 
   # - stage: BuildDocker
   #   displayName: Build Docker Image
