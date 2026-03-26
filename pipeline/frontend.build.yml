@@ -78,8 +78,24 @@ stages:
             displayName: Use Node.js $(nodeVersion)
             inputs:
               versionSpec: $(nodeVersion)
-
           - task: SnykSecurityScan@1
+            displayName: Scan Open source
+            inputs:
+              serviceConnectionEndpoint: 'snyk-connection'
+              testType: 'app'
+              targetFile: 'frontend'
+              severityThreshold: 'medium'
+              monitorWhen: 'always'
+              failOnIssues: true
+              organization: 'parshchakurkar'
+              additionalArguments: '--all-projects --tags=$(Build.BuildID)'
+
+      - job: StaticCodescan
+        displayName: Static code scan
+        steps:
+          - checkout: self
+          - task: SnykSecurityScan@1
+            displayName: Scan Static code
             inputs:
               serviceConnectionEndpoint: 'snyk-connection'
               testType: 'code'
@@ -88,8 +104,22 @@ stages:
               projectName: 'Chatapp-Frontend'
               organization: 'parshchakurkar'
               failOnThreshold: 'medium'
-              monitorWhen: 'always'
+          
+          - task: PowerShell@2
+            displayName: Convert to html
+            inputs:
+              targetType: 'inline'
+              script: |
+                if(-not (Get-Command snyk-to-html -ErrorAction SilentlyContinue)) { 
+                    npm install -g snyk-to-html 
+                }
+                snyk-to-html -i 'report.sarif' -o 'report.html'
 
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/code/report.html'
+              ArtifactName: 'frontendcode Analysis'
+              publishLocation: 'Container'
 
 
   # - stage: BuildDocker
