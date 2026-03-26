@@ -38,3 +38,23 @@ variables:
 
 - name: containername
   value: terraform
+
+# frontend variables
+- name: containerRegistry
+  value: chatappacr.azurecr.io
+- name: acrName
+  value: chatappacr
+- name: imageName
+  value: chatapp-frontend
+- name: imageTag
+  value: $(Build.BuildId)
+- name: dockerfilePath
+  value: frontend/Dockerfile
+- name: buildContext
+  value: frontend
+- name: nodeVersion
+  value: '18'
+- name: npmCacheSize
+  value: 500
+- name: snykScanType
+  value: application,container
