@@ -58,3 +58,5 @@ variables:
   value: 500
 - name: snykScanType
   value: application,container
+- name: acrConnection
+  value: acrconnection
