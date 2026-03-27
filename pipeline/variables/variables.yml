@@ -44,21 +44,24 @@ variables:
   value: chatappacr.azurecr.io
 - name: acrName
   value: chatappacr
-- name: imageName
+- name: frontendimageName
   value: chatapp-frontend
-- name: imageTag
+- name: frontendimageTag
   value: $(Build.BuildId)
 - name: dockerfilePath
   value: frontend/Dockerfile
-- name: buildContext
-  value: frontend
 - name: nodeVersion
   value: '18'
-- name: npmCacheSize
-  value: 500
 - name: acrConnection
   value: acrconnection
 
+# Backend variables
+- name: backendImageName
+  value: chatapp-backend
+- name: backenddockerfilePath
+  value: backend/Dockerfile
+- name: snykProjectNamebackend
+  value: 'Backend_ChatApp' 
 # Snyk scan variables
 
 - name: snykProjectName

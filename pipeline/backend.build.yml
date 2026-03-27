@@ -1,4 +1,4 @@
-name: Frontend_Build_$(Build.SourceBranchName)_01.00.00.$(rev:.rrrr)
+name: Backend_Build_$(Build.SourceBranchName)_01.00.00.$(rev:.rrrr)
 
 trigger:
   branches:
@@ -10,8 +10,8 @@ trigger:
       - docs/*
   paths:
     include:
-      - frontend/**
-      - pipeline/frontend.build.yml
+      - backend/**
+      - pipeline/backend.build.yml
 
 pr:
   - main
@@ -20,7 +20,7 @@ pr:
 
 variables:
   - template: /pipeline/variables/variables.yml
-  - name: frontendimageTag
+  - name: backendimageTag
     value: $(Build.BuildId)
   
 
@@ -45,26 +45,20 @@ stages:
             displayName: Install dependencies
             inputs:
               command: 'ci'
-              workingDir: 'frontend'
+              workingDir: 'backend'
 
-          - script: |
-              cd frontend
-              npm run lint
-            displayName: Run ESLint
-            continueOnError: true
-          
           - task: Npm@1
             displayName: NPM Build
             inputs:
               command: 'custom'
-              workingDir: 'frontend'
+              workingDir: 'backend'
               customCommand: 'run build'
-
+          
           - task: PublishBuildArtifacts@1
             displayName: Publish build artifacts
             inputs:
-              pathToPublish: frontend/dist
-              artifactName: frontend-dist-$(Build.BuildId)
+              pathToPublish: backend/src
+              artifactName: backend-src-$(Build.BuildId)
 
       - job: GetBuildVersion
         displayName: Get Build Version
@@ -95,6 +89,7 @@ stages:
             displayName: Use Node.js $(nodeVersion)
             inputs:
               versionSpec: $(nodeVersion)
+          
           - task: SnykSecurityScan@1
             displayName: Scan Open source
             inputs:
@@ -103,13 +98,14 @@ stages:
               monitorWhen: 'always'
               failOnIssues: false
               organization: '$(snykOrg)'
-              additionalArguments: '--all-projects --target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch) --exclude=backend,terraform,kubernetes'
+              additionalArguments: '--all-projects --target-reference=$(snykProjectNamebackend) --tags=Version=Backend_v$(Version),branch=$(Build.SourceBranch) --exclude=frontend,terraform,kubernetes'
               failOnThreshold: 'high'
 
       - job: StaticCodescan
         displayName: Static code scan
         steps:
           - checkout: self
+          
           - task: SnykSecurityScan@1
             displayName: Scan Static code
             inputs:
@@ -130,11 +126,12 @@ stages:
                   npm install -g snyk-to-html 
                 }
                 snyk-to-html -i "$(Build.SourcesDirectory)/code/report.sarif" -o "$(Build.SourcesDirectory)/code/report.html"
+          
           - task: PublishBuildArtifacts@1
             displayName: publish analysis
             inputs:
               PathtoPublish: '$(Build.SourcesDirectory)/code/report.html'
-              ArtifactName: 'frontendcode Analysis'
+              ArtifactName: 'backendcode Analysis'
               publishLocation: 'Container'
 
 
@@ -155,11 +152,11 @@ stages:
             displayName: Build Docker image
             inputs:
               containerRegistry: $(containerRegistry)
-              repository: '$(frontendimageName)'
+              repository: '$(backendImageName)'
               command: 'build'
-              Dockerfile: '$(frontenddockerfilePath)'
+              Dockerfile: '$(backenddockerfilePath)'
               tags: |
-                $(frontendimageTag)
+                $(backendimageTag)
                 latest
               arguments: '--build-arg NODE_VERSION=$(nodeVersion)'
 
@@ -169,22 +166,21 @@ stages:
             inputs:
               serviceConnectionEndpoint: 'snyk-connection'
               testType: 'container'
-              dockerImageName: '$(frontendimageName):$(frontendimageTag)'
-              dockerfilePath: '$(frontenddockerfilePath)'
+              dockerImageName: '$(backendImageName):$(backendimageTag)'
+              dockerfilePath: '$(backenddockerfilePath)'
               monitorWhen: 'always'
               failOnIssues: false
               organization: '$(snykOrg)'
               failOnThreshold: 'high'
-              additionalArguments: '--target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch)'
+              additionalArguments: '--target-reference=$(snykProjectNamebackend) --tags=Version=Backend_v$(Version),branch=$(Build.SourceBranch)'
 
           - task: Docker@2
             displayName: Docker Image Push
             condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
             inputs:
               containerRegistry: $(containerRegistry)
-              repository: '$(frontendimageName)'
+              repository: '$(backendImageName)'
               command: 'push'
               tags: |
-                $(frontendimageTag)
+                $(backendimageTag)
                 latest
-              
