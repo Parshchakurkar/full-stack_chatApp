@@ -98,13 +98,12 @@ stages:
             inputs:
               serviceConnectionEndpoint: 'snyk-connection'
               testType: 'app'
-              targetFile: 'frontend'
-              severityThreshold: 'medium'
               monitorWhen: 'always'
               failOnIssues: true
               organization: '$(snykOrg)'
               additionalArguments: '--all-projects --target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch) --exclude=backend,terraform,kubernetes'
-      
+              failOnThreshold: high
+
       - job: StaticCodescan
         displayName: Static code scan
         steps:
@@ -120,17 +119,17 @@ stages:
               additionalArguments: '--all-projects --sarif-file-output=$(Build.SourcesDirectory)/code/report.sarif'
           
           - task: PowerShell@2
-            displayName: Convert to html
-            condition: succeededorfailed()
+            displayName: ConverttoHtml
+            condition: succeededOrFailed()
             inputs:
               targetType: 'inline'
               script: |
-                if(-not (Get-Command snyk-to-html -ErrorAction SilentlyContinue)) { 
-                    npm install -g snyk-to-html 
+                if (-not (Get-Command snyk-to-html -ErrorAction SilentlyContinue)) { 
+                  npm install -g snyk-to-html 
                 }
                 snyk-to-html -i "$(Build.SourcesDirectory)/code/report.sarif" -o "$(Build.SourcesDirectory)/code/report.html"'
-
           - task: PublishBuildArtifacts@1
+            displayName: Publish report
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/code/report.html'
               ArtifactName: 'frontendcode Analysis'
