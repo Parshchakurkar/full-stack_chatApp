@@ -102,7 +102,6 @@ stages:
               severityThreshold: 'medium'
               monitorWhen: 'always'
               failOnIssues: true
-              projectName: '$(snykProjectName)'
               organization: '$(snykOrg)'
               additionalArguments: '--all-projects --target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch) --exclude=backend,terraform,kubernetes'
       
