@@ -142,6 +142,9 @@ stages:
     displayName: Build Docker Image & Scan
     dependsOn: SecurityScan
     condition: succeeded()
+    variables:
+      Version: $[stageDependencies.Build.GetBuildVersion.outputs['GetVersion.version']]
+
     jobs:
       - job: BuildImage
         displayName: Build
@@ -160,49 +163,26 @@ stages:
                 latest
               arguments: '--build-arg NODE_VERSION=$(nodeVersion)'
 
-
-  # - stage: ImageSecurityScan
-  #   displayName: Image Security Scanning
-  #   dependsOn: BuildDocker
-  #   condition: succeeded()
-  #   jobs:
-  #     - job: SnykImageScan
-  #       displayName: Snyk Docker Image Scan
-  #       steps:
-  #         - checkout: self
-
-  #         - task: Docker@2
-  #           inputs:
-  #             containerRegistry: 'docker'
-  #             repository: '$(imageName)'
-  #             command: 'build'
-  #             Dockerfile: '$(dockerfilePath)'
-  #             tags: |
-  #               $(imageTag)
-  #               latest
-
-  #         - script: |
-  #             npm install -g snyk
-  #           displayName: Install Snyk CLI
-
-  #         - script: |
-  #             snyk auth $(SNYK_TOKEN)
-  #           displayName: Authenticate with Snyk
-  #           env:
-  #             SNYK_TOKEN: $(SNYK_TOKEN)
-
-  #         - script: |
-  #             snyk container test $(imageName):$(imageTag) --severity=high --file=$(dockerfilePath)
-  #           displayName: Snyk Docker Image Vulnerability Scan
-  #           continueOnError: true
-
-  #         - task: PublishTestResults@2
-  #           displayName: Publish Snyk scan results
-  #           inputs:
-  #             testResultsFormat: JUnit
-  #             testResultsFiles: snyk-report.xml
-  #           condition: always()
-  #           continueOnError: true
+          - task: SnykSecurityScan@1
+            displayName: ImageScan
+            condition: succeeded()
+            inputs:
+              serviceConnectionEndpoint: 'snyk-connection'
+              testType: 'container'
+              dockerImageName: '$(frontendimageName):$(frontendimageTag)'
+              dockerfilePath: '$(frontenddockerfilePath)'
+              monitorWhen: 'always'
+              failOnIssues: false
+              organization: '$(snykOrg)'
+              failOnThreshold: 'high'
+              additionalArguments: '--target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch)'
+          - task: PublishTestResults@2
+            displayName: Publish Snyk scan results
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: snyk-report.xml
+            condition: always()
+            continueOnError: true
 
   # - stage: PushToACR
   #   displayName: Push to Azure Container Registry
@@ -262,19 +242,3 @@ stages:
   #             echo "Repository: $(imageName)"
   #             echo "Tags: $(imageTag), latest, $(Build.SourceBranchName)-latest"
   #           displayName: Log push details
-
-  # - stage: NotifyBuild
-  #   displayName: Build Notifications
-  #   dependsOn: PushToACR
-  #   condition: always()
-  #   jobs:
-  #     - job: NotifyStatus
-  #       displayName: Notify Build Status
-  #       steps:
-  #         - script: |
-  #             if [ $(Agent.JobStatus) = "Succeeded" ]; then
-  #               echo "Build pipeline completed successfully"
-  #             else
-  #               echo "Build pipeline failed"
-  #             fi
-  #           displayName: Build Status
