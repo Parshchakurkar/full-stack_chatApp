@@ -47,6 +47,12 @@ stages:
               command: 'ci'
               workingDir: 'backend'
 
+          - script: |
+              cd frontend
+              npm run lint
+            displayName: Run ESLint
+            continueOnError: true
+
           - task: Npm@1
             displayName: NPM Build
             inputs:
@@ -57,8 +63,8 @@ stages:
           - task: PublishBuildArtifacts@1
             displayName: Publish build artifacts
             inputs:
-              pathToPublish: backend/src
-              artifactName: backend-src-$(Build.BuildId)
+              pathToPublish: backend/dist
+              artifactName: backend-dist-$(Build.BuildId)
 
       - job: GetBuildVersion
         displayName: Get Build Version
