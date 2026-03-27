@@ -56,7 +56,12 @@ variables:
   value: '18'
 - name: npmCacheSize
   value: 500
-- name: snykScanType
-  value: application,container
 - name: acrConnection
   value: acrconnection
+
+# Snyk scan variables
+
+- name: snykProjectName
+  value: 'Frontend_ChatApp' 
+- name: snykOrg
+  value: parshchakurkar
