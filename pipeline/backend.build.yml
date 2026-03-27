@@ -135,52 +135,52 @@ stages:
               publishLocation: 'Container'
 
 
-  - stage: BuildDockerandpush
-    displayName: Build Docker Image, Scan and push
-    dependsOn: SecurityScan
-    condition: succeeded()
-    variables:
-      Version: $[stageDependencies.Build.GetBuildVersion.outputs['GetVersion.version']]
+  # - stage: BuildDockerandpush
+  #   displayName: Build Docker Image, Scan and push
+  #   dependsOn: SecurityScan
+  #   condition: succeeded()
+  #   variables:
+  #     Version: $[stageDependencies.Build.GetBuildVersion.outputs['GetVersion.version']]
 
-    jobs:
-      - job: BuildImage
-        displayName: Build
-        steps:
-          - checkout: self
+  #   jobs:
+  #     - job: BuildImage
+  #       displayName: Build
+  #       steps:
+  #         - checkout: self
 
-          - task: Docker@2
-            displayName: Build Docker image
-            inputs:
-              containerRegistry: $(containerRegistry)
-              repository: '$(backendImageName)'
-              command: 'build'
-              Dockerfile: '$(backenddockerfilePath)'
-              tags: |
-                $(backendimageTag)
-                latest
-              arguments: '--build-arg NODE_VERSION=$(nodeVersion)'
+  #         - task: Docker@2
+  #           displayName: Build Docker image
+  #           inputs:
+  #             containerRegistry: $(containerRegistry)
+  #             repository: '$(backendImageName)'
+  #             command: 'build'
+  #             Dockerfile: '$(backenddockerfilePath)'
+  #             tags: |
+  #               $(backendimageTag)
+  #               latest
+  #             arguments: '--build-arg NODE_VERSION=$(nodeVersion)'
 
-          - task: SnykSecurityScan@1
-            displayName: ImageScan
-            condition: succeeded()
-            inputs:
-              serviceConnectionEndpoint: 'snyk-connection'
-              testType: 'container'
-              dockerImageName: '$(backendImageName):$(backendimageTag)'
-              dockerfilePath: '$(backenddockerfilePath)'
-              monitorWhen: 'always'
-              failOnIssues: false
-              organization: '$(snykOrg)'
-              failOnThreshold: 'high'
-              additionalArguments: '--target-reference=$(snykProjectNamebackend) --tags=Version=Backend_v$(Version),branch=$(Build.SourceBranch)'
+  #         - task: SnykSecurityScan@1
+  #           displayName: ImageScan
+  #           condition: succeeded()
+  #           inputs:
+  #             serviceConnectionEndpoint: 'snyk-connection'
+  #             testType: 'container'
+  #             dockerImageName: '$(backendImageName):$(backendimageTag)'
+  #             dockerfilePath: '$(backenddockerfilePath)'
+  #             monitorWhen: 'always'
+  #             failOnIssues: false
+  #             organization: '$(snykOrg)'
+  #             failOnThreshold: 'high'
+  #             additionalArguments: '--target-reference=$(snykProjectNamebackend) --tags=Version=Backend_v$(Version),branch=$(Build.SourceBranch)'
 
-          - task: Docker@2
-            displayName: Docker Image Push
-            condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-            inputs:
-              containerRegistry: $(containerRegistry)
-              repository: '$(backendImageName)'
-              command: 'push'
-              tags: |
-                $(backendimageTag)
-                latest
+  #         - task: Docker@2
+  #           displayName: Docker Image Push
+  #           condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  #           inputs:
+  #             containerRegistry: $(containerRegistry)
+  #             repository: '$(backendImageName)'
+  #             command: 'push'
+  #             tags: |
+  #               $(backendimageTag)
+  #               latest
