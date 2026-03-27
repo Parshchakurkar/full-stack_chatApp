@@ -5,7 +5,7 @@ trigger:
     include:
       - main
       - release/*
-      - develop
+      - develop/*
     exclude:
       - docs/*
   paths:
@@ -15,7 +15,7 @@ trigger:
 
 pr:
   - main
-  - develop
+  - develop/*
   - release/*
 
 variables:
