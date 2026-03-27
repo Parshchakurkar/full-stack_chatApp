@@ -28,38 +28,9 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-  - stage: Build
-    displayName: Build
-    jobs:
-      - job: CodevalidationandBuild
-        displayName: Code Quality Validation and Build
-        steps:
-          - checkout: self
-          
-          - task: NodeTool@0
-            displayName: Use Node.js $(nodeVersion)
-            inputs:
-              versionSpec: $(nodeVersion)
-          
-          - task: Npm@1
-            displayName: Install dependencies
-            inputs:
-              command: 'ci'
-              workingDir: 'backend'
-
-          - task: Npm@1
-            displayName: NPM Build
-            inputs:
-              command: 'custom'
-              workingDir: 'backend'
-              customCommand: 'start'
-          
-          - task: PublishBuildArtifacts@1
-            displayName: Publish build artifacts
-            inputs:
-              pathToPublish: backend/src
-              artifactName: backend-src-$(Build.BuildId)
-
+  - stage: GetBuildVersion
+    displayName: GetBuildVersion
+    jobs: 
       - job: GetBuildVersion
         displayName: Get Build Version
         steps:
@@ -75,10 +46,10 @@ stages:
 
   - stage: SecurityScan
     displayName: Security Scanning
-    dependsOn: Build
+    dependsOn: GetBuildVersion
     condition: succeeded()
     variables:
-      Version: $[stageDependencies.Build.GetBuildVersion.outputs['GetVersion.version']]
+      Version: $[stageDependencies.GetBuildVersion.GetBuildVersion.outputs['GetVersion.version']]
     jobs:
       - job: SnykSourceScan
         displayName: Snyk Source Scan
@@ -89,7 +60,12 @@ stages:
             displayName: Use Node.js $(nodeVersion)
             inputs:
               versionSpec: $(nodeVersion)
-          
+          - task: Npm@1
+            displayName: Install dependencies
+            inputs:
+              command: 'ci'
+              workingDir: 'backend'
+
           - task: SnykSecurityScan@1
             displayName: Scan Open source
             inputs:
