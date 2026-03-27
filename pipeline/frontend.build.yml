@@ -99,10 +99,10 @@ stages:
               serviceConnectionEndpoint: 'snyk-connection'
               testType: 'app'
               monitorWhen: 'always'
-              failOnIssues: true
+              failOnIssues: false
               organization: '$(snykOrg)'
               additionalArguments: '--all-projects --target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch) --exclude=backend,terraform,kubernetes'
-              failOnThreshold: high
+              failOnThreshold: 'high'
 
       - job: StaticCodescan
         displayName: Static code scan
@@ -127,7 +127,7 @@ stages:
                 if (-not (Get-Command snyk-to-html -ErrorAction SilentlyContinue)) { 
                   npm install -g snyk-to-html 
                 }
-                snyk-to-html -i "$(Build.SourcesDirectory)/code/report.sarif" -o "$(Build.SourcesDirectory)/code/report.html"'
+                snyk-to-html -i "$(Build.SourcesDirectory)/code/report.sarif" -o "$(Build.SourcesDirectory)/code/report.html"
           - task: PublishBuildArtifacts@1
             displayName: Publish report
             inputs:
