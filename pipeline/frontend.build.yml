@@ -129,9 +129,9 @@ stages:
                 }
                 snyk-to-html -i "$(Build.SourcesDirectory)/code/report.sarif" -o "$(Build.SourcesDirectory)/code/report.html"
           - task: PublishBuildArtifacts@1
-            displayName: Publish report
+            displayName: publish analysis
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/code/report.html'
+              PathtoPublish: '$(Build.SourcesDirectory)/code/report.html'
               ArtifactName: 'frontendcode Analysis'
               publishLocation: 'Container'
 
