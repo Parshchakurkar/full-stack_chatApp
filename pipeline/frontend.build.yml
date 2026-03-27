@@ -1,4 +1,4 @@
-name: Frontend_Build_$(Date:yyyyMMdd)$(Rev:.r)
+name: Frontend_Build_$(Build.SourceBranchName)_01.00.00.$(rev:.rrrr)
 
 trigger:
   branches:
@@ -64,10 +64,25 @@ stages:
               pathToPublish: frontend/dist
               artifactName: frontend-dist-$(Build.BuildId)
 
+      - job: GetBuildVersion
+        displayName: Get Build Version
+        steps:
+          - checkout: none
+          - task: PowerShell@2
+            displayName: get version
+            inputs:
+              targetType: 'inline'
+              script: |
+                $versionData = [regex]::matches('$(Build.BuildNumber)', '(\d+\.\d+\.\d+)').value -replace '\b0(\d)', '$1'
+                Write-Host "##vso[task.setvariable variable=version;isOutput=true]$versionData"
+            name: GetVersion
+
   - stage: SecurityScan
     displayName: Security Scanning
     dependsOn: Build
     condition: succeeded()
+    variables:
+      Version: $[stageDependencies.Build.GetBuildVersion.outputs['GetVersion.version']]
     jobs:
       - job: SnykSourceScan
         displayName: Snyk Source Scan
@@ -87,9 +102,10 @@ stages:
               severityThreshold: 'medium'
               monitorWhen: 'always'
               failOnIssues: true
-              organization: 'parshchakurkar'
-              additionalArguments: '--all-projects --tags=$(Build.BuildID)'
-
+              projectName: '$(snykProjectName)'
+              organization: '$(snykOrg)'
+              additionalArguments: '--all-projects --target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch) --exclude=backend,terraform,kubernetes'
+      
       - job: StaticCodescan
         displayName: Static code scan
         steps:
@@ -99,11 +115,10 @@ stages:
             inputs:
               serviceConnectionEndpoint: 'snyk-connection'
               testType: 'code'
-              codeSeverityThreshold: 'medium'
               failOnIssues: false
-              projectName: 'Chatapp-Frontend'
-              organization: 'parshchakurkar'
-              failOnThreshold: 'medium'
+              organization: '$(snykOrg)'
+              failOnThreshold: 'high'
+              additionalArguments: '--all-projects --sarif-file-output=$(Build.ArtifactStagingDirectory)/code/report.sarif'
           
           - task: PowerShell@2
             displayName: Convert to html
