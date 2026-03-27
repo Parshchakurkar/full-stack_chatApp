@@ -117,17 +117,18 @@ stages:
               failOnIssues: false
               organization: '$(snykOrg)'
               failOnThreshold: 'high'
-              additionalArguments: '--all-projects --sarif-file-output=$(Build.ArtifactStagingDirectory)/code/report.sarif'
+              additionalArguments: '--all-projects --sarif-file-output=$(Build.SourcesDirectory)/code/report.sarif'
           
           - task: PowerShell@2
             displayName: Convert to html
+            condition: succeededorfailed()
             inputs:
               targetType: 'inline'
               script: |
                 if(-not (Get-Command snyk-to-html -ErrorAction SilentlyContinue)) { 
                     npm install -g snyk-to-html 
                 }
-                snyk-to-html -i 'report.sarif' -o 'report.html'
+                snyk-to-html -i "$(Build.SourcesDirectory)/code/report.sarif" -o "$(Build.SourcesDirectory)/code/report.html"'
 
           - task: PublishBuildArtifacts@1
             inputs:
