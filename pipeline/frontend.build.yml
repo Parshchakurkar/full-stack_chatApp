@@ -154,7 +154,7 @@ stages:
           - task: Docker@2
             displayName: Build Docker image
             inputs:
-              containerRegistry: $(containerRegistry)
+              containerRegistry: $(containerRegistryconnection)
               repository: '$(frontendimageName)'
               command: 'build'
               Dockerfile: '$(frontenddockerfilePath)'
@@ -176,12 +176,15 @@ stages:
               organization: '$(snykOrg)'
               failOnThreshold: 'high'
               additionalArguments: '--target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch)'
-
+          - task: Docker@2
+            inputs:
+              containerRegistry: '$(containerRegistryconnection)'
+              command: 'login'
           - task: Docker@2
             displayName: Docker Image Push
-            condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+            #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
             inputs:
-              containerRegistry: $(containerRegistry)
+              containerRegistry: $(containerRegistryconnection)
               repository: '$(frontendimageName)'
               command: 'push'
               tags: |
