@@ -122,7 +122,7 @@ stages:
         steps:
           - checkout: self
           - task: PowerShell@2
-            displayName: Get Solver version
+            displayName: Get backend version
             inputs:
               targetType: 'inline'
               script: |
