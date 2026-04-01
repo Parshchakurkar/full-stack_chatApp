@@ -150,7 +150,15 @@ stages:
         displayName: Build
         steps:
           - checkout: self
-
+          - task: PowerShell@2
+            displayName: Get front version
+            inputs:
+              targetType: 'inline'
+              script: |
+                $ver = [regex]::Match("$(Build.BuildNumber)", '\d+\.\d+\.\d+\.\d+').Value
+                $trimmed = ($ver -split '\.' | % { [int]$_ }) -join '.'
+                Write-Host "Trimmed Version: $trimmed"
+                Write-Output "##vso[task.setvariable variable=BuildVersion]$trimmed"
           - task: Docker@2
             displayName: Build Docker image
             inputs:
@@ -159,7 +167,7 @@ stages:
               command: 'build'
               Dockerfile: '$(frontenddockerfilePath)'
               tags: |
-                $(frontendimageTag)
+                $(BuildVersion)
                 latest
               arguments: '--build-arg NODE_VERSION=$(nodeVersion)'
 
@@ -169,7 +177,7 @@ stages:
             inputs:
               serviceConnectionEndpoint: 'snyk-connection'
               testType: 'container'
-              dockerImageName: '$(frontendimageName):$(frontendimageTag)'
+              dockerImageName: 'chatappacr.azurecr.io/$(frontendimageName):$(BuildVersion)'
               dockerfilePath: '$(frontenddockerfilePath)'
               monitorWhen: 'always'
               failOnIssues: false
@@ -188,6 +196,6 @@ stages:
               repository: '$(frontendimageName)'
               command: 'push'
               tags: |
-                $(frontendimageTag)
+                $(BuildVersion)
                 latest
               
