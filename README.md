@@ -149,7 +149,15 @@ docker-compose logs -f
 
 
 You can now interact with the real-time chat app and start messaging!
+---
+Azure CLI Commands to create resources (to setup things fast)
 
+`az login` --- login
+`az group create --name chatapp-resources --location eastus`
+
+`az storage account create --name chatappresources1 --resource-group chatapp-resources  --location eastus --sku Standard_LRS`
+
+`az storage container create --name terraform --account-name chatappresources1`
 ---
 ## Terraform
 - created AKS modlue currently now for dev environment
