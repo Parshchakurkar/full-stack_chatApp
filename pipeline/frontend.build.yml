@@ -1,4 +1,4 @@
-name: Frontend_Build_$(Build.SourceBranchName)_01.00.00.$(rev:.rrrr)
+name: Frontend_Build_$(Build.SourceBranchName)_01.00.00$(rev:.rrrr)
 
 trigger:
   branches:
