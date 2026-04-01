@@ -48,7 +48,7 @@ variables:
   value: chatapp-frontend
 - name: frontendimageTag
   value: $(Build.BuildId)
-- name: dockerfilePath
+- name: frontenddockerfilePath
   value: frontend/Dockerfile
 - name: nodeVersion
   value: '18'
