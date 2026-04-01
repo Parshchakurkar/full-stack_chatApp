@@ -40,8 +40,8 @@ variables:
   value: terraform
 
 # frontend variables
-- name: containerRegistry
-  value: chatappacr.azurecr.io
+- name: containerRegistryconnection
+  value: chatappacrserviceconnection
 - name: acrName
   value: chatappacr
 - name: frontendimageName
