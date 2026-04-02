@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: chatappacr.azurecr.io/chatappbackend:1.0
+          image: chatappacr.azurecr.io/chatapp-backend:1.0.0.10
           imagePullPolicy: Always
           ports:
             - containerPort: 5001
@@ -47,7 +47,7 @@ spec:
 # In Kubernetes, services are discovered using internal DNS names.
 # Default format : service-name.namespace.svc.cluster.local
 #If MongoDB is deployed in another namespace (for example database), then you must specify the namespace.
-
+#mongodb://root:admin@<svc>.<namespace>.svc.cluster.local:27017/chatApp?authSource=admin
 #Example:
 
 #mongodb.<namespace>:27017

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: chatappacr.azurecr.io/chatappfrontend:1.0
+        image: chatappacr.azurecr.io/chatapp-frontend:1.0.0.9
         imagePullPolicy: Always
         ports:
         - containerPort: 80

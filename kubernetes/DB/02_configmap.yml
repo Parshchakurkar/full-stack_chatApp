@@ -4,4 +4,4 @@ metadata:
   name: mongodb-configmap
   namespace: mongodb
 data:
-  MONGO_INITDB_ROOT_USERNAME: mongoadmin
+  MONGO_INITDB_ROOT_USERNAME: root
