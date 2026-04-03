@@ -1,0 +1,201 @@
+name: Frontend_Build_$(Build.SourceBranchName)_01.00.00$(rev:.rrrr)
+
+trigger:
+  branches:
+    include:
+      - main
+      - release/*
+      - develop/*
+    exclude:
+      - docs/*
+  paths:
+    include:
+      - frontend/**
+      - pipeline/frontend.build.yml
+
+pr:
+  - main
+  - develop/*
+  - release/*
+
+variables:
+  - template: /pipeline/variables/variables.yml
+  - name: frontendimageTag
+    value: $(Build.BuildId)
+  
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Build
+    displayName: Build
+    jobs:
+      - job: CodevalidationandBuild
+        displayName: Code Quality Validation and Build
+        steps:
+          - checkout: self
+          
+          - task: NodeTool@0
+            displayName: Use Node.js $(nodeVersion)
+            inputs:
+              versionSpec: $(nodeVersion)
+          
+          - task: Npm@1
+            displayName: Install dependencies
+            inputs:
+              command: 'ci'
+              workingDir: 'frontend'
+
+          - script: |
+              cd frontend
+              npm run lint
+            displayName: Run ESLint
+            continueOnError: true
+          
+          - task: Npm@1
+            displayName: NPM Build
+            inputs:
+              command: 'custom'
+              workingDir: 'frontend'
+              customCommand: 'run build'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish build artifacts
+            inputs:
+              pathToPublish: frontend/dist
+              artifactName: frontend-dist-$(Build.BuildId)
+
+      - job: GetBuildVersion
+        displayName: Get Build Version
+        steps:
+          - checkout: none
+          - task: PowerShell@2
+            displayName: get version
+            inputs:
+              targetType: 'inline'
+              script: |
+                $versionData = [regex]::matches('$(Build.BuildNumber)', '(\d+\.\d+\.\d+)').value -replace '\b0(\d)', '$1'
+                Write-Host "##vso[task.setvariable variable=version;isOutput=true]$versionData"
+            name: GetVersion
+
+  - stage: SecurityScan
+    displayName: Security Scanning
+    dependsOn: Build
+    condition: succeeded()
+    variables:
+      Version: $[stageDependencies.Build.GetBuildVersion.outputs['GetVersion.version']]
+    jobs:
+      - job: SnykSourceScan
+        displayName: Snyk Source Scan
+        steps:
+          - checkout: self
+
+          - task: NodeTool@0
+            displayName: Use Node.js $(nodeVersion)
+            inputs:
+              versionSpec: $(nodeVersion)
+          - task: SnykSecurityScan@1
+            displayName: Scan Open source
+            inputs:
+              serviceConnectionEndpoint: 'snyk-connection'
+              testType: 'app'
+              monitorWhen: 'always'
+              failOnIssues: false
+              organization: '$(snykOrg)'
+              additionalArguments: '--all-projects --target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch) --exclude=backend,terraform,kubernetes'
+              failOnThreshold: 'high'
+
+      - job: StaticCodescan
+        displayName: Static code scan
+        steps:
+          - checkout: self
+          - task: SnykSecurityScan@1
+            displayName: Scan Static code
+            inputs:
+              serviceConnectionEndpoint: 'snyk-connection'
+              testType: 'code'
+              failOnIssues: false
+              organization: '$(snykOrg)'
+              failOnThreshold: 'high'
+              additionalArguments: '--all-projects --sarif-file-output=$(Build.SourcesDirectory)/code/report.sarif'
+          
+          - task: PowerShell@2
+            displayName: ConverttoHtml
+            condition: succeededOrFailed()
+            inputs:
+              targetType: 'inline'
+              script: |
+                if (-not (Get-Command snyk-to-html -ErrorAction SilentlyContinue)) { 
+                  npm install -g snyk-to-html 
+                }
+                snyk-to-html -i "$(Build.SourcesDirectory)/code/report.sarif" -o "$(Build.SourcesDirectory)/code/report.html"
+          - task: PublishBuildArtifacts@1
+            displayName: publish analysis
+            inputs:
+              PathtoPublish: '$(Build.SourcesDirectory)/code/report.html'
+              ArtifactName: 'frontendcode Analysis'
+              publishLocation: 'Container'
+
+
+  - stage: BuildDockerandpush
+    displayName: Build Docker Image, Scan and push
+    dependsOn: SecurityScan
+    condition: succeeded()
+    variables:
+      Version: $[stageDependencies.Build.GetBuildVersion.outputs['GetVersion.version']]
+
+    jobs:
+      - job: BuildImage
+        displayName: Build
+        steps:
+          - checkout: self
+          - task: PowerShell@2
+            displayName: Get front version
+            inputs:
+              targetType: 'inline'
+              script: |
+                $ver = [regex]::Match("$(Build.BuildNumber)", '\d+\.\d+\.\d+\.\d+').Value
+                $trimmed = ($ver -split '\.' | % { [int]$_ }) -join '.'
+                Write-Host "Trimmed Version: $trimmed"
+                Write-Output "##vso[task.setvariable variable=BuildVersion]$trimmed"
+          - task: Docker@2
+            displayName: Build Docker image
+            inputs:
+              containerRegistry: $(containerRegistryconnection)
+              repository: '$(frontendimageName)'
+              command: 'build'
+              Dockerfile: '$(frontenddockerfilePath)'
+              tags: |
+                $(BuildVersion)
+                latest
+              arguments: '--build-arg NODE_VERSION=$(nodeVersion)'
+
+          - task: SnykSecurityScan@1
+            displayName: ImageScan
+            condition: succeeded()
+            inputs:
+              serviceConnectionEndpoint: 'snyk-connection'
+              testType: 'container'
+              dockerImageName: 'chatappacr.azurecr.io/$(frontendimageName):$(BuildVersion)'
+              dockerfilePath: '$(frontenddockerfilePath)'
+              monitorWhen: 'always'
+              failOnIssues: false
+              organization: '$(snykOrg)'
+              failOnThreshold: 'high'
+              additionalArguments: '--target-reference=$(snykProjectName) --tags=Version=FrontEnd_v$(Version),branch=$(Build.SourceBranch)'
+          - task: Docker@2
+            inputs:
+              containerRegistry: '$(containerRegistryconnection)'
+              command: 'login'
+          - task: Docker@2
+            displayName: Docker Image Push
+            condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+            inputs:
+              containerRegistry: $(containerRegistryconnection)
+              repository: '$(frontendimageName)'
+              command: 'push'
+              tags: |
+                $(BuildVersion)
+                latest
+              
