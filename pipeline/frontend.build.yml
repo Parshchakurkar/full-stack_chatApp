@@ -190,7 +190,7 @@ stages:
               command: 'login'
           - task: Docker@2
             displayName: Docker Image Push
-            #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+            condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
             inputs:
               containerRegistry: $(containerRegistryconnection)
               repository: '$(frontendimageName)'
