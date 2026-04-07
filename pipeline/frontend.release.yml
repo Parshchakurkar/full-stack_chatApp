@@ -1,3 +1,5 @@
+name: $(Build.DefinitionName)_$(Build.SourceBranchName) Release $(Date:yyyymmdd)$(Rev:.r) (build
+
 trigger:
   branches:
     include:
@@ -6,7 +8,7 @@ trigger:
 variables:
   - template: /pipeline/variables/variables.yml
   - name: chartPath
-    value: kubernetes/argocd/charts/dev/chatapp-frontend
+    value: kubernetes/argocd/charts/chatapp-frontend
   - name: chartName
     value: chatapp-frontend
 
@@ -14,6 +16,24 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
+  - stage: Vulnurability
+    displayName: Vulnurability report
+    jobs: 
+      - job: checkvulnurability
+        displayName: Check Vulnerability
+        pool: server
+        timeoutInMinutes: 720
+        steps:
+          - checkout: self
+          - task: ManualValidation@1
+            displayName: Review snyk 
+            inputs:
+              notifyUsers: 'parshchakurkar@gmail.com'
+              approvers: 'parshchakurkar@gmail.com'
+              instructions: 'Please review the snyk report and approve to proceed with the release pipeline.'
+        
+#---------------------------------------------------------------------------------------> Pack and push
+
   - stage: PackageAndPush
     displayName: Package and Push Helm Chart
     jobs:
