@@ -62,7 +62,7 @@ stages:
         pool: server
         timeoutInMinutes: 720
         steps:
-        
+
           - task: ManualValidation@1
             displayName: Review snyk 
             inputs:
@@ -97,7 +97,7 @@ stages:
           - task: AzureCLI@2
             displayName: Push Helm chart to ACR
             inputs:
-              azureSubscription: '$(acrConnection)'
+              azureSubscription: '$(chatapp)'
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
@@ -114,3 +114,4 @@ stages:
         displayName: deploy backend app
         steps:
           - checkout: none
+
