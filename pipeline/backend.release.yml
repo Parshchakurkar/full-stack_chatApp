@@ -1,0 +1,56 @@
+
+name: $(Build.DefinitionName)_$(Build.SourceBranchName) Release $(Date:yyyymmdd)$(Rev:.r) (build
+
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  - template: /pipeline/variables/variables.yml
+  - name: chartPath
+    value: kubernetes/argocd/charts/chatapp-backend
+  - name: chartName
+    value: chatapp-backend
+
+resources:
+  pipelines:
+    - pipeline: Frontend_chatapp_build
+      source: Frontend.chatapp.build
+      branch: main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: can
+  - stage: PackageAndPush
+    displayName: Package and Push Helm Chart
+    jobs:
+      - job: PackagePush
+        displayName: Package and Push
+        steps:
+          - checkout: self
+
+          - task: HelmInstaller@1
+            displayName: Install Helm
+            inputs:
+              helmVersionToInstall: '3.10.0'
+
+          - script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)
+              helm package $(chartPath) -d $(Build.ArtifactStagingDirectory) --version $(Build.BuildId)
+            displayName: Package Helm chart
+
+          - task: AzureCLI@2
+            displayName: Push Helm chart to ACR
+            inputs:
+              azureSubscription: '$(acrConnection)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az acr login --name $(acrName)
+                CHART_FILE=$(ls $(Build.ArtifactStagingDirectory)/*.tgz | head -n1)
+                helm chart save "$CHART_FILE" $(acrName).azurecr.io/$(chartName)-chart:$(Build.BuildId)
+                helm chart push $(acrName).azurecr.io/$(chartName)-chart:$(Build.BuildId)
