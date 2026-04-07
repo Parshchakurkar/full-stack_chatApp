@@ -4,6 +4,9 @@ trigger:
   branches:
     include:
       - main
+    paths:
+      - kubernetes/argocd/charts/chatapp-frontend/**
+
 
 variables:
   - template: /pipeline/variables/variables.yml
@@ -11,6 +14,12 @@ variables:
     value: kubernetes/argocd/charts/chatapp-frontend
   - name: chartName
     value: chatapp-frontend
+
+resources:
+  pipelines:
+    - pipeline: Frontend_chatapp_build
+      source: Frontend.chatapp.build
+      branch: main
 
 pool:
   vmImage: ubuntu-latest
@@ -25,6 +34,20 @@ stages:
         timeoutInMinutes: 720
         steps:
           - checkout: self
+          - task: PowerShell@2
+            displayName: set run name
+            inputs:
+              targetType: 'inline'
+              script: |
+                $currentBuildNumber = "$(Build.BuildNumber)"
+                if($currentBuildNumber -like "*$setupRunName"){
+                  write-host "Setup pipeline name already part of the build number, skipping setting up the name"
+                  exit 0
+                }
+                write-host "updating build number to setup pipeline name"
+                Write-Host "##vso[build.updatebuildnumber]$(Build.BuildNumber) $setupRunName"
+                write-Host "Pipeline has been renamed"
+
           - task: ManualValidation@1
             displayName: Review snyk 
             inputs:
@@ -36,6 +59,10 @@ stages:
 
   - stage: PackageAndPush
     displayName: Package and Push Helm Chart
+    dependsOn: Vulnurability
+    variables:
+      - $buildVersion: $(resources.pipeline.Backend_chatapp_build.variables.version)
+
     jobs:
       - job: PackagePush
         displayName: Package and Push
@@ -49,7 +76,7 @@ stages:
 
           - script: |
               mkdir -p $(Build.ArtifactStagingDirectory)
-              helm package $(chartPath) -d $(Build.ArtifactStagingDirectory) --version $(Build.BuildId)
+              helm package $(chartPath) -d $(Build.ArtifactStagingDirectory) --version $buildVersion
             displayName: Package Helm chart
 
           - task: AzureCLI@2
@@ -62,5 +89,5 @@ stages:
                 set -euo pipefail
                 az acr login --name $(acrName)
                 CHART_FILE=$(ls $(Build.ArtifactStagingDirectory)/*.tgz | head -n1)
-                helm chart save "$CHART_FILE" $(acrName).azurecr.io/$(chartName)-chart:$(Build.BuildId)
-                helm chart push $(acrName).azurecr.io/$(chartName)-chart:$(Build.BuildId)
+                helm chart save "$CHART_FILE" $(acrName).azurecr.io/$(chartName):$buildVersion
+                helm chart push $(acrName).azurecr.io/$(chartName):$buildVersion
