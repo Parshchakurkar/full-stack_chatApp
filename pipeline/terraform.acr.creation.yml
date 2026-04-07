@@ -6,7 +6,7 @@ pool:
 
 variables:
   - group: terraform variables
-  - template: "/variables/variables.yml"
+  - template: "/pipeline/variables/variables.yml"
   - name: workingDirectory
     value: "terraform/acr creation"
 jobs:
