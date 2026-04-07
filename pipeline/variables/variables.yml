@@ -39,6 +39,12 @@ variables:
 - name: containername
   value: terraform
 
+- name: aksResourceGroup
+  value: chatapp-resources
+- name: aksClusterName
+  value: chatapp-resources-aks
+
+
 # frontend variables
 - name: containerRegistryconnection
   value: chatappacrserviceconnection

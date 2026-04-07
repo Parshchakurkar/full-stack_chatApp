@@ -18,6 +18,8 @@ variables:
     value: kubernetes/argocd/charts/chatapp-backend
   - name: chartName
     value: chatapp-backend
+  - name: k8sNamespace
+    value: backend-namespace
 
 resources:
   pipelines:
@@ -113,5 +115,41 @@ stages:
       - job: deploy
         displayName: deploy backend app
         steps:
-          - checkout: none
+          - checkout: self
+
+          - task: HelmInstaller@1
+            displayName: Install Helm
+            inputs:
+              helmVersionToInstall: '3.10.0'
+
+          - task: AzureCLI@2
+            displayName: Get AKS credentials
+            inputs:
+              azureSubscription: '$(chatapp)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                echo "Getting AKS credentials for cluster $(aksClusterName) in RG $(aksResourceGroup)"
+                az aks get-credentials --resource-group $(aksResourceGroup) --name $(aksClusterName) --overwrite-existing
+
+          - task: AzureCLI@2
+            displayName: Pull Helm chart from ACR and deploy to AKS
+            inputs:
+              azureSubscription: '$(chatapp)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                echo "Logging into ACR $(acrName)"
+                az acr login --name $(acrName)
+                CHART_REF=$(acrName).azurecr.io/$(chartName):$buildVersion
+                echo "Pulling chart $CHART_REF"
+                helm chart pull "$CHART_REF"
+                echo "Exporting chart"
+                helm chart export "$CHART_REF" --destination $(Build.ArtifactStagingDirectory)
+                CHART_DIR=$(Build.ArtifactStagingDirectory)/$(chartName)
+                echo "Deploying helm chart from $CHART_DIR"
+                helm upgrade --install $(chartName)-release "$CHART_DIR" --namespace $(k8sNamespace) --create-namespace --set image.tag=$buildVersion
+
 
