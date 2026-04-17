@@ -25,7 +25,7 @@ variables:
   value: Standard_DS2_v2
 
 - name: TF_VAR_acrname
-  value: chatappacr
+  value: chatappacr123
 
 - name: storage_account
   value: chatappresources1
@@ -49,7 +49,7 @@ variables:
 - name: containerRegistryconnection
   value: chatappacrserviceconnection
 - name: acrName
-  value: chatappacr
+  value: chatappacr123
 - name: frontendimageName
   value: chatapp-frontend
 - name: frontendimageTag

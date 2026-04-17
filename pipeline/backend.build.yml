@@ -148,7 +148,7 @@ stages:
             inputs:
               serviceConnectionEndpoint: 'snyk-connection'
               testType: 'container'
-              dockerImageName: 'chatappacr.azurecr.io/$(backendImageName):$(BuildVersion)'
+              dockerImageName: 'chatappacr123.azurecr.io/$(backendImageName):$(BuildVersion)'
               dockerfilePath: '$(backenddockerfilePath)'
               monitorWhen: 'always'
               failOnIssues: false
