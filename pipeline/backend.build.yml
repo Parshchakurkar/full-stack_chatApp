@@ -162,7 +162,7 @@ stages:
 
           - task: Docker@2
             displayName: Docker Image Push
-            condition: and(succeeded(), eq((variables['Build.SourceBranch'], 'refs/heads/main') or((variables['Build.SourceBranch'], 'refs/heads/release/*')) )
+            condition: and(succeeded(), or(eq((variables['Build.SourceBranch'], 'refs/heads/main')), startsWith((variables['Build.SourceBranch'], 'refs/heads/release/*')) )
             inputs:
               containerRegistry: $(containerRegistryconnection)
               repository: '$(backendImageName)'
