@@ -22,7 +22,7 @@ variables:
   value: 172.16.0.10
 
 - name: TF_VAR_vm_size
-  value: Standard_DS2_v2
+  value: Standard_B2pls_v2
 
 - name: TF_VAR_acrname
   value: chatappacr123
