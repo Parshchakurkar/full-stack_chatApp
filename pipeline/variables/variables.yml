@@ -22,10 +22,10 @@ variables:
   value: 172.16.0.10
 
 - name: TF_VAR_vm_size
-  value: Standard_DS2_v2
+  value: Standard D2as v5
 
 - name: TF_VAR_acrname
-  value: chatappacr
+  value: chatappacr123
 
 - name: storage_account
   value: chatappresources1
@@ -39,11 +39,17 @@ variables:
 - name: containername
   value: terraform
 
+- name: aksResourceGroup
+  value: chatapp-resources
+- name: aksClusterName
+  value: chatapp-resources-aks
+
+
 # frontend variables
 - name: containerRegistryconnection
   value: chatappacrserviceconnection
 - name: acrName
-  value: chatappacr
+  value: chatappacr123
 - name: frontendimageName
   value: chatapp-frontend
 - name: frontendimageTag

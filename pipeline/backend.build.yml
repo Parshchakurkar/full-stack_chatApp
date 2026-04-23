@@ -148,7 +148,7 @@ stages:
             inputs:
               serviceConnectionEndpoint: 'snyk-connection'
               testType: 'container'
-              dockerImageName: 'chatappacr.azurecr.io/$(backendImageName):$(BuildVersion)'
+              dockerImageName: 'chatappacr123.azurecr.io/$(backendImageName):$(BuildVersion)'
               dockerfilePath: '$(backenddockerfilePath)'
               monitorWhen: 'always'
               failOnIssues: false
@@ -162,7 +162,7 @@ stages:
 
           - task: Docker@2
             displayName: Docker Image Push
-            condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+            condition: and(succeeded(),or(eq(variables['Build.SourceBranch'], 'refs/heads/main'),startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')))            
             inputs:
               containerRegistry: $(containerRegistryconnection)
               repository: '$(backendImageName)'

@@ -153,12 +153,25 @@ You can now interact with the real-time chat app and start messaging!
 Azure CLI Commands to create resources (to setup things fast)
 
 `az login` --- login
+
 `az group create --name chatapp-resources --location eastus`
 
 `az storage account create --name chatappresources1 --resource-group chatapp-resources  --location eastus --sku Standard_LRS`
 
 `az storage container create --name terraform --account-name chatappresources1`
+
+then  for azure devops:
+
+az extension add --name azure-devops
+az devops configure --defaults organization=https://dev.azure.com/<your-org> project=<your-project>
+
+You also need:
+Azure DevOps PAT (or already logged in via az devops login)
+Permissions to create service connections
+
+
 ---
+After running resourceenv.ps1 script run ACR and then AKS pipeline.
 ## Terraform
 - created AKS modlue currently now for dev environment
 ### Terraform architecture for pipeline and infrastructure

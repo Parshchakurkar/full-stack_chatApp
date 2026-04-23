@@ -1,0 +1,155 @@
+##As this is practice release pipeline deploying the application in one env.
+
+
+name: $(Build.DefinitionName)_$(Build.SourceBranchName) Release $(Date:yyyymmdd)$(Rev:.r) (build
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - kubernetes/argocd/charts/chatapp-backend/**
+    
+
+variables:
+  - template: /pipeline/variables/variables.yml
+  - name: chartPath
+    value: kubernetes/argocd/charts/chatapp-backend
+  - name: chartName
+    value: chatapp-backend
+  - name: k8sNamespace
+    value: backend-namespace
+
+resources:
+  pipelines:
+    - pipeline: Backend_chatapp_build
+      source: Backend.chatapp.build
+      branch: main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: prepration
+    displayName: preparation
+    jobs:
+      - job: Getversionandsetname
+        displayName: Get version and setname
+        steps:
+          - checkout: self
+          - task: PowerShell@2
+            displayName: set run name
+            inputs:
+              targetType: 'inline'
+              script: |
+                $setupRunName= "$(resources.pipeline.Backend_chatapp_build.runName)"
+                $currentBuildNumber = "$(Build.BuildNumber)"
+                if($currentBuildNumber -like "*$setupRunName"){
+                  write-host "Setup pipeline name already part of the build number, skipping setting up the name"
+                  exit 0
+                }
+                write-host "updating build number to setup pipeline name"
+                Write-Host "##vso[build.updatebuildnumber]$(Build.BuildNumber) $setupRunName"
+                write-Host "Pipeline has been renamed"
+                Write-Host "##vso[task.setvariable variable=version;isOutput=true]$(Build.BuildNumber)"
+            name: getversion
+
+  - stage: Vulnurability
+    displayName: Vulnurability report
+    dependsOn: prepration
+    jobs: 
+      - job: checkvulnurability
+        displayName: Check Vulnerability
+        pool: server
+        timeoutInMinutes: 720
+        steps:
+
+          - task: ManualValidation@1
+            displayName: Review snyk 
+            inputs:
+              notifyUsers: 'parshchakurkar@gmail.com'
+              approvers: 'parshchakurkar@gmail.com'
+              instructions: 'Please review the snyk report and approve to proceed with the release pipeline.'
+        
+#---------------------------------------------------------------------------> Pack and push
+
+  - stage: PackageAndPush
+    displayName: Package and Push Helm Chart
+    dependsOn: prepration
+    variables:
+      buildVersion: $[stageDependencies.prepration.Getversionandsetname.outputs['getversion.version']]
+
+    jobs:
+      - job: PackagePush
+        displayName: Package and Push
+        steps:
+          - checkout: self
+
+          - task: HelmInstaller@1
+            displayName: Install Helm
+            inputs:
+              helmVersionToInstall: '3.10.0'
+
+          - script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)
+              helm package $(chartPath) -d $(Build.ArtifactStagingDirectory) --version $buildVersion
+            displayName: Package Helm chart
+
+          - task: AzureCLI@2
+            displayName: Push Helm chart to ACR
+            inputs:
+              azureSubscription: '$(chatapp)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                az acr login --name $(acrName)
+                CHART_FILE=$(ls $(Build.ArtifactStagingDirectory)/*.tgz | head -n1)
+                helm chart save "$CHART_FILE" $(acrName).azurecr.io/$(chartName):$buildVersion
+                helm chart push $(acrName).azurecr.io/$(chartName):$buildVersion
+
+  - stage: 
+    displayName: deployapplication
+    jobs:
+      - job: deploy
+        displayName: deploy backend app
+        steps:
+          - checkout: self
+
+          - task: HelmInstaller@1
+            displayName: Install Helm
+            inputs:
+              helmVersionToInstall: '3.10.0'
+
+          - task: AzureCLI@2
+            displayName: Get AKS credentials
+            inputs:
+              azureSubscription: '$(chatapp)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                echo "Getting AKS credentials for cluster $(aksClusterName) in RG $(aksResourceGroup)"
+                az aks get-credentials --resource-group $(aksResourceGroup) --name $(aksClusterName) --overwrite-existing
+
+          - task: AzureCLI@2
+            displayName: Pull Helm chart from ACR and deploy to AKS
+            inputs:
+              azureSubscription: '$(chatapp)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                echo "Logging into ACR $(acrName)"
+                az acr login --name $(acrName)
+                CHART_REF=$(acrName).azurecr.io/$(chartName):$buildVersion
+                echo "Pulling chart $CHART_REF"
+                helm chart pull "$CHART_REF"
+                echo "Exporting chart"
+                helm chart export "$CHART_REF" --destination $(Build.ArtifactStagingDirectory)
+                CHART_DIR=$(Build.ArtifactStagingDirectory)/$(chartName)
+                echo "Deploying helm chart from $CHART_DIR"
+                helm upgrade --install $(chartName)-release "$CHART_DIR" --namespace $(k8sNamespace) --create-namespace --set image.tag=$buildVersion
+
+

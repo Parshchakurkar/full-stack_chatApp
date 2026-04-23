@@ -27,6 +27,7 @@ resource "azurerm_kubernetes_cluster" "chat-app-aks" {
   location            = data.azurerm_resource_group.chat-app.location
   dns_prefix          = "${var.rg_name}-dns"
   role_based_access_control_enabled = true
+  oidc_issuer_enabled = false
   default_node_pool {
     name       = "default"
     node_count = var.node_count
