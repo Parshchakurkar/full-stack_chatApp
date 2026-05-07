@@ -1,24 +1,120 @@
-⚠️ Select ONLY ONE section below — the one that matches your git provider.
-# Do not include multiple provider sections in the same configuration file.
+# ============================================================
+#  Qodo (PR-Agent) Configuration File
+#  Scope  : Azure DevOps – DevOps / Terraform / K8s / Docker
+#  File   : .pr_agent.toml  (place at repo root)
+#  Docs   : https://docs.qodo.ai
+# ============================================================
 
 # GitHub App
 [github_app]
 pr_commands = [
     "/agentic_describe",
-    "/agentic_review"
+    "/agentic_review",
+    "/improve"
 ]
 
 
+# ------------------------------------------------------------
+# 2. GLOBAL CONFIG
+# ------------------------------------------------------------
+[config]
+# Surface all config used by each tool (useful during setup)
+output_relevant_configurations = false
+ 
+# Folders to restrict auto-review to (remove list to scan all)
+# allow_only_specific_folders = ["infra", "k8s", "docker"]
+ 
+# Skip PRs that are purely dependency bumps or auto-generated
+ignore_pr_title         = ["^\\[Bump\\]", "^chore\\(deps\\)", "^auto-merge"]
+ignore_pr_labels        = ["skip-review", "wont-fix", "draft"]
+ignore_ticket_labels    = ["ignore-compliance"]
+ 
+# Additional repo metadata files PR-Agent should read for context
+add_repo_metadata_file_list = ["QODO.MD", "AGENTS.MD", "ARCHITECTURE.md"]
+ 
+# Response language
+response_language = "en-US"
+ 
+# ------------------------------------------------------------
+# 3. REVIEW AGENT
+# ------------------------------------------------------------
 [review_agent]
+# "summary"  → one top-level comment only (less noisy)
+# "inline"   → comments on specific lines
+# "both"     → summary + inline (most verbose)
 comments_location_policy = "both"
-
-# severity threshold rank for inline comments:
-# 3=action_required,
-# 2=remediation_recommended,
-# 1=informational.
-# Only findings with rank >= threshold will be published inline
-inline_comments_severity_threshold = 3
-
-# Extra prompt for usecase to be added as instruction for the agent
-issues_user_guidelines = ""
-compliance_user_guidelines = ""
+ 
+# Severity threshold for inline comments:
+#   3 = action_required   (bugs, security issues, hard violations)
+#   2 = remediation_recommended  (warnings, missed best practices)
+#   1 = informational     (style, minor suggestions)
+inline_comments_severity_threshold = 2
+ 
+# Extra per-PR guidelines sent to the review agent
+issues_user_guidelines = """
+Focus review on infrastructure-as-code changes (Terraform),
+Kubernetes manifests, Dockerfiles, and Azure DevOps pipeline YAML files.
+Flag any hardcoded secrets, connection strings, or access keys immediately
+as action_required. Enforce Azure naming conventions and tagging standards.
+"""
+ 
+compliance_user_guidelines = """
+Enforce CIS Azure Foundations Benchmark controls where applicable.
+Flag resources that are publicly accessible without justification.
+Ensure all resources have the mandatory tags: environment, owner,
+project, managed-by, cost-center.
+"""
+ 
+# ------------------------------------------------------------
+# 4. CODE IMPROVEMENT SUGGESTIONS
+# ------------------------------------------------------------
+[pr_code_suggestions]
+# How many suggestions to surface per PR (keep focused)
+num_code_suggestions = 6
+ 
+# Extra instructions for the improve tool
+extra_instructions = """
+1. Prioritise security and reliability issues over style.
+2. Flag use of 'latest' image tags in Dockerfiles and K8s manifests.
+3. Flag missing resource requests/limits on K8s containers.
+4. Flag Terraform resources missing required Azure tags.
+5. Flag any Azure storage account without HTTPS-only enforcement.
+6. Flag plain-text secrets or passwords anywhere in the diff.
+7. Suggest pinned, specific versions for all tool/provider dependencies.
+8. Do NOT suggest cosmetic refactors unrelated to correctness or security.
+"""
+ 
+# ------------------------------------------------------------
+# 5. PR DESCRIPTION (agentic_describe)
+# ------------------------------------------------------------
+[pr_description]
+# Auto-generate a structured PR description including:
+# summary, change type, affected files, risk level
+publish_description_as_comment = false
+add_original_user_description  = true
+generate_ai_title               = false
+ 
+# Require these sections in every AI-generated description
+description_mentions_files = true
+ 
+# ------------------------------------------------------------
+# 6. LABELLING
+# ------------------------------------------------------------
+[pr_reviewer]
+# Automatically add labels based on PR content
+require_score_review     = false
+require_security_review  = true
+require_focused_review   = true
+ 
+# Extra reviewer instructions (sent with every /review command)
+extra_instructions = """
+When reviewing infrastructure code (Terraform, K8s, Docker, pipelines):
+- Check for hardcoded credentials, tokens, or secrets.
+- Verify all Azure resources use private endpoints where applicable.
+- Ensure Terraform state is remote (Azure Blob backend) with locking enabled.
+- Confirm K8s workloads define resource requests AND limits.
+- Validate Dockerfiles follow multi-stage build patterns for production images.
+- Confirm pipeline YAML uses Azure Key Vault references, not inline secrets.
+- Check that all Terraform modules pin provider and module versions.
+- Flag use of deprecated Kubernetes API versions.
+"""
