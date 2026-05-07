@@ -47,6 +47,13 @@ spec:
             port: 27017
           initialDelaySeconds: 30
           periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
       volumes:                         # ✅ Fix 2: moved out of containers, sibling of containers
         - name: mongodb-storage
           persistentVolumeClaim:

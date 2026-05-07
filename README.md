@@ -211,6 +211,17 @@ put the output in file with extension .dot ex: graph.dot
 dot -Tpng graph.dot -o graph.png
 ```
 
+If want to apply everyting with commands from your machine create .tfvars and backendconfig.hcl file in local and run
+`terraform init -var-file=test.tfvars -backend-config=backend.hcl`
+
+then 
+`terraform validate`
+
+later perform plan:
+`terraform plan -var-file=test.tfvars`
+
+
+
 ### Varisbles:
 - varibles required for the terraform pipelie stored in the ```/variable/variable.yml``` file
 
