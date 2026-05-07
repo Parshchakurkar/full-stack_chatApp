@@ -11,3 +11,10 @@ module "dataapp-aks" {
   vm_size               = var.vm_size
   acrname               = var.acrname
 }
+
+module "argocd" {
+  source    = "../../modules/argocd"
+  kubeconfig = module.dataapp-aks.kubeconfig
+  namespace = "argocd"
+  depends_on = [module.dataapp-aks]
+}
