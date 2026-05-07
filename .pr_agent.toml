@@ -52,7 +52,7 @@ inline_comments_severity_threshold = 2
  
 # Extra per-PR guidelines sent to the review agent
 issues_user_guidelines = """
-Focus review on infrastructure-as-code changes (Terraform, Bicep, ARM),
+Focus review on infrastructure-as-code changes (Terraform),
 Kubernetes manifests, Dockerfiles, and Azure DevOps pipeline YAML files.
 Flag any hardcoded secrets, connection strings, or access keys immediately
 as action_required. Enforce Azure naming conventions and tagging standards.
@@ -83,9 +83,6 @@ extra_instructions = """
 7. Suggest pinned, specific versions for all tool/provider dependencies.
 8. Do NOT suggest cosmetic refactors unrelated to correctness or security.
 """
- 
-# Enable self-review checkbox on PRs
-approve_pr_on_self_review = false
  
 # ------------------------------------------------------------
 # 5. PR DESCRIPTION (agentic_describe)
