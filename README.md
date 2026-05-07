@@ -232,6 +232,10 @@ i. Run AKS pipeline to have the aks cluster created.
 ii. Run --> az aks get-credentials --resource chatapp-resources --name chatapp-resources-aks 
 iii. make sure you have images architecture match with node pool vm architechture.
 
+## AI tools used
+- Configured qodo to review code when PR raised, Setup guide defined in repo
+
+
 ## 🔮 Future Plans
 
 This project is evolving, and here are a few exciting things on the horizon:
