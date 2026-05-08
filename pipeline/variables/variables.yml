@@ -23,6 +23,7 @@ variables:
 
 - name: TF_VAR_vm_size
   value: Standard D2as v5
+  
 
 - name: TF_VAR_acrname
   value: chatappacr123
