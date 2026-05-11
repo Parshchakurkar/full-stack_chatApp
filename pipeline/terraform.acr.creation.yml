@@ -71,12 +71,21 @@ jobs:
         TF_VAR_vm_size : $(TF_VAR_vm_size)
         TF_VAR_subscription_id : $(TF_VAR_subscription_id)
         TF_VAR_acrname : $(TF_VAR_acrname)
+
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          cd "terraform/acr creation/"
+          ls
     - task: PowerShell@2
       displayName: check on there resources
       condition: always()
       inputs:
         filePath: 'scripts/read-terraform-plan.ps1'
         arguments: '-$tfplanFolder "terraform/acr creation/"'
+
+    
 
     # Terraform APPLY
     # - task: TerraformTaskV4@4
