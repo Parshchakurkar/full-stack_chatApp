@@ -76,9 +76,9 @@ jobs:
       displayName: check on there resources
       condition: always()
       inputs:
-        filePath: 'scripts/read-terraform-plan.ps1'
-        arguments: '-tfplanFolder $(workingDirectory)'
-        workingDirectory: '$(workingDirectory)'
+        filePath: '$(System.DefaultWorkingDirectory)/scripts/read-terraform-plan.ps1'
+        arguments: '-tfplanFolder "$(System.DefaultWorkingDirectory)/terraform/acr creation"'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/acr creation'
 
     
 
