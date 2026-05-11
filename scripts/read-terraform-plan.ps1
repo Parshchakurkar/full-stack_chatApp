@@ -79,4 +79,6 @@ function tfplanToJson {
 
 
 #------------------Eexecution------------------
+cd $tfplanFolder
+ls
 tfplanToJson -tfplanFolder $tfplanFolder
