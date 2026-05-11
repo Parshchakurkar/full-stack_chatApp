@@ -3,13 +3,12 @@ param (
 )
 
 function readLogs {
-    param (
-        [string]$file
-    )
+    param ([string]$file)
     try {
         $plan = Get-Content -Path $file | ConvertFrom-Json
 
         $results = foreach ($change in $plan.resource_changes) {
+            # ✅ Replaced ?? with if/else for PowerShell 5.x compatibility
             $resourceGroup = if ($change.change.after.resource_group_name) { $change.change.after.resource_group_name } else { $change.change.before.resource_group_name }
             $sku = if ($change.change.after.sku) { $change.change.after.sku } else { $change.change.before.sku }
 
@@ -22,18 +21,14 @@ function readLogs {
             }
         }
 
-        # Desired display order for common actions
         $orderedKeys = @("CREATE", "UPDATE", "DELETE")
-
         $actionLabels = @{
             "CREATE" = "1. CREATE"
             "UPDATE" = "2. UPDATE"
             "DELETE" = "3. DELETE"
         }
-
         $printed = @()
 
-        # Print common actions in the desired order
         foreach ($key in $orderedKeys) {
             $filtered = $results | Where-Object { $_.Action -eq $key }
             if ($filtered) {
@@ -43,7 +38,6 @@ function readLogs {
             }
         }
 
-        # Find any other distinct action values and print them grouped under OTHER
         $allActions = $results.Action | Where-Object { $_ -ne $null } | Sort-Object -Unique
         $otherActions = $allActions | Where-Object { -not ($printed -contains $_) }
         if ($otherActions) {
@@ -52,14 +46,13 @@ function readLogs {
                 $results | Where-Object { $_.Action -eq $act } | Format-Table -AutoSize
             }
         }
-
-
     }
     catch {
         Write-Host "Error reading or parsing the file: $_" -ForegroundColor Red
         Exit 1
     }
 }
+
 
 #Convert .tfplan in json format
 
