@@ -58,6 +58,7 @@ jobs:
         provider: 'azurerm'
         command: 'plan'
         workingDirectory: '$(workingDirectory)'
+        commandOptions: '-out="tfplan.binary"'
         environmentServiceNameAzureRM: 'chatapp'
       env:
         TF_VAR_env: $(TF_VAR_env)
@@ -70,23 +71,29 @@ jobs:
         TF_VAR_vm_size : $(TF_VAR_vm_size)
         TF_VAR_subscription_id : $(TF_VAR_subscription_id)
         TF_VAR_acrname : $(TF_VAR_acrname)
+    - task: PowerShell@2
+      displayName: check on there resources
+      condition: always()
+      inputs:
+        filePath: 'scripts/read-terraform-plan.ps1'
+        arguments: '-$tfplanFolder "terraform/acr creation"'
 
     # Terraform APPLY
-    - task: TerraformTaskV4@4
-      displayName: Terraform Apply
-      inputs:
-        provider: 'azurerm'
-        command: 'apply'
-        workingDirectory: '$(workingDirectory)'
-        environmentServiceNameAzureRM: 'chatapp'
-      env:
-        TF_VAR_env: $(TF_VAR_env)
-        TF_VAR_rg_name : $(TF_VAR_rg_name)
-        TF_VAR_rg_location : $(TF_VAR_rg_location)
-        TF_VAR_vnet_address_space: $(TF_VAR_vnet_address_space)
-        TF_VAR_subnet_address_prefix: $(TF_VAR_subnet_address_prefix)
-        TF_VAR_service_cidr : $(TF_VAR_service_cidr)
-        TF_VAR_dns_service_ip : $(TF_VAR_dns_service_ip)
-        TF_VAR_vm_size : $(TF_VAR_vm_size)
-        TF_VAR_subscription_id : $(TF_VAR_subscription_id)
-        TF_VAR_acrname : $(TF_VAR_acrname)
+    # - task: TerraformTaskV4@4
+    #   displayName: Terraform Apply
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'apply'
+    #     workingDirectory: '$(workingDirectory)'
+    #     environmentServiceNameAzureRM: 'chatapp'
+    #   env:
+    #     TF_VAR_env: $(TF_VAR_env)
+    #     TF_VAR_rg_name : $(TF_VAR_rg_name)
+    #     TF_VAR_rg_location : $(TF_VAR_rg_location)
+    #     TF_VAR_vnet_address_space: $(TF_VAR_vnet_address_space)
+    #     TF_VAR_subnet_address_prefix: $(TF_VAR_subnet_address_prefix)
+    #     TF_VAR_service_cidr : $(TF_VAR_service_cidr)
+    #     TF_VAR_dns_service_ip : $(TF_VAR_dns_service_ip)
+    #     TF_VAR_vm_size : $(TF_VAR_vm_size)
+    #     TF_VAR_subscription_id : $(TF_VAR_subscription_id)
+    #     TF_VAR_acrname : $(TF_VAR_acrname)
