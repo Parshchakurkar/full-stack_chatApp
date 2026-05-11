@@ -8,7 +8,6 @@ function readLogs {
         $plan = Get-Content -Path $file | ConvertFrom-Json
 
         $results = foreach ($change in $plan.resource_changes) {
-            # ✅ Replaced ?? with if/else for PowerShell 5.x compatibility
             $resourceGroup = if ($change.change.after.resource_group_name) { $change.change.after.resource_group_name } else { $change.change.before.resource_group_name }
             $sku = if ($change.change.after.sku) { $change.change.after.sku } else { $change.change.before.sku }
 
@@ -63,6 +62,7 @@ function tfplanToJson {
     try {
         if (Test-Path -path $tfplanFolder/tfplan.binary) {
             terraform show -json $tfplanFolder/tfplan.binary > $tfplanFolder/plan.json
+            ls
             readLogs -file $tfplanFolder/plan.json
         }
         else {
@@ -79,6 +79,4 @@ function tfplanToJson {
 
 
 #------------------Eexecution------------------
-cd $tfplanFolder
-ls
 tfplanToJson -tfplanFolder $tfplanFolder
