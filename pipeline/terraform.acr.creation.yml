@@ -78,6 +78,7 @@ jobs:
       inputs:
         filePath: 'scripts/read-terraform-plan.ps1'
         arguments: '-tfplanFolder "terraform/acr creation"'
+        workingDirectory: '$(workingDirectory)'
 
     
 
