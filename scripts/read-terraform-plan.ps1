@@ -1,4 +1,6 @@
-
+param (
+    [string]$tfplanFolder
+)
 
 function readLogs {
     param (
@@ -43,7 +45,7 @@ function readLogs {
         $otherActions = $allActions | Where-Object { -not ($printed -contains $_) }
         if ($otherActions) {
             foreach ($act in $otherActions) {
-                Write-Host "`nOTHER - $act:" -ForegroundColor Yellow
+                Write-Host "`nOTHER - $act :" -ForegroundColor Yellow
                 $filtered = $results | Where-Object { $_.Action -eq $act }
                 $filtered | Format-Table -AutoSize
             }
@@ -56,3 +58,30 @@ function readLogs {
         Exit 1
     }
 }
+
+#Convert .tfplan in json format
+
+function tfplanToJson {
+    param (
+        [string]$tfplanFolder
+    )
+    try {
+        if (Test-Path -path $tfplanFolder/tfplan.binary) {
+            terraform show -json $tfplanFolder/tfplan.binary > $tfplanFolder/plan.json
+            readLogs -file $tfplanFolder/plan.json
+        }
+        else {
+            Write-Host "The specified .tfplan file does not exist in: $tfplanFolder" -ForegroundColor Red
+            Exit 1
+        }
+    }
+    catch {
+        Write-Host "Error converting .tfplan to JSON: $_" -ForegroundColor Red
+        Exit 1
+    }
+}
+
+
+
+#------------------Eexecution------------------
+tfplanToJson -tfplanFolder $tfplanFolder
