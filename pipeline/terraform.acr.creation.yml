@@ -77,7 +77,7 @@ jobs:
       condition: always()
       inputs:
         filePath: 'scripts/read-terraform-plan.ps1'
-        arguments: '-tfplanFolder "terraform/acr creation"'
+        arguments: '-tfplanFolder $(workingDirectory)'
         workingDirectory: '$(workingDirectory)'
 
     
