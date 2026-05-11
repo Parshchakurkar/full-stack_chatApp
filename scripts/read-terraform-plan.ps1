@@ -10,12 +10,15 @@ function readLogs {
         $plan = Get-Content -Path $file | ConvertFrom-Json
 
         $results = foreach ($change in $plan.resource_changes) {
+            $resourceGroup = if ($change.change.after.resource_group_name) { $change.change.after.resource_group_name } else { $change.change.before.resource_group_name }
+            $sku = if ($change.change.after.sku) { $change.change.after.sku } else { $change.change.before.sku }
+
             [PSCustomObject]@{
                 Resource      = $change.address
                 Type          = $change.type
                 Action        = ($change.change.actions -join "+").ToUpper()
-                ResourceGroup = $change.change.after.resource_group_name ?? $change.change.before.resource_group_name
-                SKU           = $change.change.after.sku ?? $change.change.before.sku
+                ResourceGroup = $resourceGroup
+                SKU           = $sku
             }
         }
 
@@ -46,8 +49,7 @@ function readLogs {
         if ($otherActions) {
             foreach ($act in $otherActions) {
                 Write-Host "`nOTHER - $act :" -ForegroundColor Yellow
-                $filtered = $results | Where-Object { $_.Action -eq $act }
-                $filtered | Format-Table -AutoSize
+                $results | Where-Object { $_.Action -eq $act } | Format-Table -AutoSize
             }
         }
 
@@ -71,7 +73,7 @@ function tfplanToJson {
             readLogs -file $tfplanFolder/plan.json
         }
         else {
-            Write-Host "The specified .tfplan file does not exist in: $tfplanFolder" -ForegroundColor Red
+            Write-Host "The specified tfplan file does not exist in: $tfplanFolder" -ForegroundColor Red
             Exit 1
         }
     }
