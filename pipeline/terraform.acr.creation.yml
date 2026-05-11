@@ -83,7 +83,7 @@ jobs:
       condition: always()
       inputs:
         filePath: 'scripts/read-terraform-plan.ps1'
-        arguments: '-$tfplanFolder "terraform/acr creation/"'
+        arguments: '-$tfplanFolder "terraform/acr creation"'
 
     
 
