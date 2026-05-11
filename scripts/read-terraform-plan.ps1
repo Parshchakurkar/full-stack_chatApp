@@ -62,7 +62,6 @@ function tfplanToJson {
     try {
         if (Test-Path -path $tfplanFolder/tfplan.binary) {
             terraform show -json $tfplanFolder/tfplan.binary > $tfplanFolder/plan.json
-            ls
             readLogs -file $tfplanFolder/plan.json
         }
         else {
@@ -79,4 +78,6 @@ function tfplanToJson {
 
 
 #------------------Eexecution------------------
+cd $tfplanFolder
+ls
 tfplanToJson -tfplanFolder $tfplanFolder
